@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Slicer with Random Width</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+</head>
+<body>
+    <script>
+        let vidA, vidB;
+        let sliceWidth = 50; // Initial slice width
+        let buffer; // Offscreen buffer for vidB
+        let lastChange = 0; // Track last time sliceWidth changed
+
+        function setup() {
+            createCanvas(640*2, 360*2);
+            buffer = createGraphics(640*2, 360*2); // Create an offscreen buffer
+
+            // Load and loop the first video
+            vidA = createVideo('Aleph AF 1 - HD 1080p.mp4', () => {
+                vidA.loop();
+                //vidA.hide();
+            });
+
+            // Load and loop the second video with a delay
+            vidB = createVideo('Aleph AF 1 - HD 1080p.mp4', () => {
+                vidB.loop();
+                vidB.hide();
+                setTimeout(() => vidB.play(), 1); // 200ms delay for out-of-sync effect
+            });
+        }
+
+        function draw() {
+            //background(0);
+            frameRate(120);
+            // Change slice width every 180 frames (~3 seconds)
+            if (frameCount - lastChange > 20+random(1,30)) {
+                sliceWidth = int(random(1, 2)); // New width between 5 and 50 pixels
+                lastChange = frameCount;
+            }
+
+            if (vidA && vidB) {
+                // Draw vidB onto the buffer and apply a filter
+                buffer.image(vidB, 0, 0, width, height);
+                buffer.filter(BLUR, 3, false); // 
+
+                let numSlices = width / sliceWidth;
+
+                for (let i = 0; i < numSlices; i++) {
+                    let x = i * sliceWidth;
+
+                    // Alternate slices between vidA and filtered vidB
+                    if (i % 2 === 0) {
+                        //image(vidA, x, 0, sliceWidth*ceil(random(1,50)), height, x, 0, sliceWidth*ceil(random(1,50)), height);
+                    } else {
+                        image(buffer, x, 0, sliceWidth, height, x, 0, sliceWidth, height);
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>

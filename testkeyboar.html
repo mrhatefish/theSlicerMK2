@@ -1,0 +1,34 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>MIDI TEST</title>
+    <style>
+        body {
+            background: #000;
+            color: #fff;
+            font-family: monospace;
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h3>MIDI MONITOR</h3>
+    <div id="log"></div>
+
+    <script>
+        navigator.requestMIDIAccess().then(midi => {
+            for (let input of midi.inputs.values()) {
+                input.onmidimessage = (msg) => {
+                    const [status, note, velocity] = msg.data;
+                    document.getElementById('log').innerHTML =
+                        `status: ${status} | note: ${note} | velocity: ${velocity} <br>` +
+                        document.getElementById('log').innerHTML;
+                };
+            }
+        });
+    </script>
+</body>
+
+</html>

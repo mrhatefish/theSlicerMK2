@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Morphing Slice Effect</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+</head>
+
+<body>
+    <script>
+        let imgA, imgB;
+        let sliceWidth = 1;
+        let lastChange = 0;
+        let morphAmount = 0; // 0 = full imgA, 1 = full imgB
+        timeline = [
+
+            { time: 1000, func: () => Slicer(BeforeYouDie, BuyPinkBold) },
+            { time: 600, func: () => Slicer(BeforeYouDie, BuyBlack) },
+            { time: 500, func: () => Slicer(BeforeYouDie, BuyPink) }
+        ]
+        let totalTime = timeline.reduce((sum, event) => sum + event.time, 0);
+        let elapsedTime = 0;
+        let prevPosTime = 0;
+
+        let startTime;
+
+        function setup() {
+            createCanvas(400, 400);
+            startTime = millis();
+        }
+
+        function setup() {
+            createCanvas(400, 400);
+            startTime = millis();
+        }
+
+        function preload() {
+            BuyPinkBold = loadImage('BUY-3.jpg');
+            BeforeYouDie = loadImage('BEFORE-YOU-DIE.jpg');
+            BuyPink = loadImage('BUY-pink.jpg');
+            BuyBlack = loadImage('BUY.jpg');
+        }
+
+        function setup() {
+
+            startTime = millis();
+            createCanvas(windowWidth, windowHeight);
+
+        }
+
+        function draw() {
+
+
+            for (let i = 0; i < timeline.length; i++) {
+                if (elapsedTime >= totalTime) {
+                    startTime = millis();
+                } else {
+                    startTime = startTime;
+                }
+
+                elapsedTime = millis() - startTime;
+
+
+                if (i == 0) {
+                    prevPosTime = 0
+                } else {
+                    //prevPosTime = timeline[i - 1].time
+                    prevPosTime = timeline.slice(0, i - 1) // Extract range
+                        .reduce((acc, event) => acc + event.time, 0);
+                }
+                //console.log("timeline" + timeline[i].time + "elapsed: " + elapsedTime + "totaltime:" + totalTime);
+                if (elapsedTime >= prevPosTime && elapsedTime < prevPosTime + timeline[i].time) {
+                    timeline[i].func(); // Calls the function with its arguments
+                    console.log("timeline" + timeline[i].time + "elapsed: " + elapsedTime + "totaltime:" + totalTime);
+
+                }
+
+            }
+        }
+
+
+        function Slicer(imgA, imgB) {
+            background(0);
+
+            // Smooth morphing using a sine wave (oscillates between 0 and 1)
+            morphAmount = (sin(frameCount * 0.01) + 1) / 2;
+
+            // Draw blended images using `tint()`
+            push();
+            tint(255, 255 * (1 - morphAmount)); // Fade out imgA
+            image(imgA, 0, 0, width, height);
+            tint(255, 255 * morphAmount); // Fade in imgB
+            image(imgB, 0, 0, width, height);
+            pop();
+
+            // Randomly update slice width
+            if (frameCount - lastChange > 4 + random(1, 3)) {
+                sliceWidth = int(random(1, 3));
+                lastChange = frameCount;
+            }
+
+            let numSlices = width / sliceWidth;
+
+            // Overlay slices from imgB
+            for (let i = 0; i < numSlices; i++) {
+                let x = i * sliceWidth;
+                if (i % 2 === 0) {
+                    image(imgB, x + random(1, 2), 0, sliceWidth, height, x * (imgB.width / width), 0, sliceWidth * (imgB.width / width), imgB.height);
+                }
+            }
+
+        }
+
+
+
+    </script>
+</body>
+
+</html>

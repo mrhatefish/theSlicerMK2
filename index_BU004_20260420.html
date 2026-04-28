@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>p5 Fullscreen Image</title>
+    <script src="https://cdn.jsdelivr.net/npm/p5@2.2.0/lib/p5.min.js"></script>
+    <style>
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 500;
+
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgb(0, 0, 0);
+            background-color: rgba(0, 0, 0, 0.0);
+        }
+
+        .modal.open {
+            display: block;
+        }
+
+        .modal.close {
+            display: none;
+        }
+
+        .blackCircle {
+            width: 47vw;
+            height: 47vw;
+            background: black;
+            border-radius: 50%;
+
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+
+        .redCircle {
+            width: 47vw;
+            height: 47vw;
+            background: red;
+            border-radius: 50%;
+
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+    </style>
+
+
+
+
+</head>
+
+<body style="margin:0; overflow:hidden;">
+
+    <script>
+
+        let timeline;
+        let startTime;
+        let totalTime;
+        let elapsedTime = 0;
+        let prevTime = 0;
+        let nextTime = 0;
+        let currentStep = -1;
+
+
+        let img = null;
+        let loading = true;
+        let imageMap = {};
+        let rawImages = `
+        1-nasci.jpg
+        2-cresci.jpg
+        3-lavora.jpg
+        4-consuma.jpg
+        5-muori.jpg
+        BEFORE-YOU-DIE.jpg
+        BUY-3.jpg
+        BUY-pink.jpg
+        BUY.jpg
+        circleBerni.jpg
+        circleBlack.jpg
+        circleWhite.jpg
+        die.jpg
+        thenDie.jpg
+        `;
+
+        let imagesArr = rawImages
+            .split('\n')
+            .map(f => f.trim())
+            .filter(f => f.length > 0);
+
+        console.log(imagesArr);
+
+
+
+        function loadImageAsync(path) {
+            return new Promise((resolve, reject) => {
+                loadImage(path, resolve, reject);
+            });
+        }
+
+
+
+        async function setup() {
+            //createCanvas(windowWidth, windowHeight);
+            let cnv = createCanvas(windowWidth, windowHeight);
+            cnv.style('z-index', '1');
+
+            startTime = millis();
+            // ImageFX arguments: image, modalID, close the othermodal,
+            timeline = [
+                { time: 7000, func: () => ImageFX.showImage(getImage("circleBlack.jpg"), null, 0) },
+                { time: 500, func: () => ImageFX.showImage(getImage("circleBlack.jpg"), null, 0) },
+                { time: 2000, func: () => ImageFX.showImage(getImage("circleBlack.jpg"), null, 0) },
+                { time: 50, func: () => ImageFX.showImage(getImage("circleWhite.jpg"), null, 0) },
+                { time: 50, func: () => ImageFX.showImage(getImage("circleBlack.jpg"), null, 0) },
+                { time: 5000, func: () => ImageFX.showImage(getImage("circleBlack.jpg"), null, 0) },
+                { time: 50, func: () => ImageFX.showImage(getImage("circleWhite.jpg"), null, 0) },
+                { time: 50, func: () => ImageFX.showImage(getImage("circleBlack.jpg"), null, 0) },
+                { time: 50, func: () => ImageFX.showImage(getImage("circleWhite.jpg"), null, 0) }
+            ]
+
+            totalTime = timeline.reduce((acc, e) => acc + e.time, 0);
+
+
+
+            try {
+                let promises = imagesArr.map(name =>
+                    loadImageAsync("assets/" + name)
+                        .then(img => ({ name, img }))
+                        .catch(err => {
+                            console.warn("Failed:", name);
+                            return null;
+                        })
+                );
+
+                let results = await Promise.all(promises);
+
+                for (let r of results) {
+                    if (r) imageMap[r.name] = r.img;
+                }
+
+            } finally {
+                loading = false;
+            }
+        }
+
+        function draw() {
+            // background(0);
+
+            if (loading) {
+                fill(255);
+                textAlign(CENTER, CENTER);
+                textSize(20);
+                text("Loading...", width / 2, height / 2);
+                return;
+            }
+
+            for (let i = 0; i < timeline.length; i++) {
+                if (elapsedTime >= totalTime) {
+                    startTime = millis();
+                } else {
+                    startTime = startTime;
+                }
+
+
+                if (i == 0) {
+                    prevTime = 0
+                    nextTime = prevTime + timeline[i].time;
+                    elapsedTime = millis() - startTime;
+                } else {
+                    elapsedTime = millis() - startTime;
+                    //prevPosTime = timeline[i - 1].time
+                    prevTime = timeline.slice(0, i).reduce((acc, event) => acc + event.time, 0);
+                    nextTime = prevTime + timeline[i].time;
+                }
+                //console.log("prevTime: " + prevTime + "  elapsed: " + elapsedTime + "  nextTime: " + nextTime + " Total Time: " + totalTime);
+
+                if (elapsedTime >= prevTime && elapsedTime < nextTime) {
+                    if (currentStep !== i) {
+                        currentStep = i;
+                        timeline[i].func();
+                    }
+                }
+
+
+
+                // let img = imageMap["1-nasci.jpg"];
+
+                /*             if (!img) {
+                                background(200, 0, 0);
+                                return;
+                            } */
+
+                //drawImageContain(img);
+
+            }
+        }
+
+
+
+        // 🔁 handle resize
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+
+        //Helpers:
+
+        function getImage(name) {
+            return imageMap[name];
+        }
+
+        function modalManager(modalID, closeModals) {
+
+            const modals = document.querySelectorAll(".modal"); //get all elements with class modal
+
+            if (closeModals > 0) {
+                // close all modals
+                for (let i = 0; i < modals.length; i++) {
+                    const modal = modals[i];
+                    modal.classList.remove("open");
+                }
+            }
+
+
+            if (modalID) {
+                const modal = document.getElementById(modalID);
+                if (modal) {
+                    modal.classList.add("open");
+                }
+            }
+
+
+        }
+
+        //Helpers END
+
+        //---the functions: ImageFX if it loads an img then Generative if it creates the images with p5js 
+        const ImageFX = {
+            showImage(img, modalID, closeModals) {
+                background(0);
+                if (!img) {
+                    console.error("IMG IS UNDEFINED");
+                    background(255, 0, 0);
+                    return;
+                }
+
+                if (!img.width || !img.height) {
+                    console.error("IMG NOT READY:", img);
+                    background(0, 0, 255);
+                    return;
+                }
+
+                modalManager(modalID, closeModals);
+
+
+
+                let canvasRatio = width / height;
+                let imgRatio = img.width / img.height;
+
+                let drawWidth, drawHeight;
+
+                if (imgRatio > canvasRatio) {
+                    // image is wider
+                    drawWidth = width;
+                    drawHeight = width / imgRatio;
+                } else {
+                    // image is taller
+                    drawHeight = height;
+                    drawWidth = height * imgRatio;
+                }
+
+                let x = (width - drawWidth) / 2;
+                let y = (height - drawHeight) / 2;
+
+                image(img, x, y, drawWidth, drawHeight);
+
+            }
+
+
+        }
+
+
+
+    </script>
+
+    <!--html-->
+
+    <div id="blackCircle" class="modal">
+        <div class="blackCircle"></div>
+    </div>
+
+    <div id="redCircle" class="modal">
+        <div class="redCircle"></div>
+    </div>
+
+
+</body>
+
+</html>

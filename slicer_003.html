@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Slice Effect</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+</head>
+<body>
+    <script>
+        let imgA, imgB;
+        let sliceWidth = 1;
+        let lastChange = 0;
+
+        function preload() {
+            imgA = loadImage('BUY.jpg');  // Change this to your image file
+            imgB = loadImage('BEFORE-YOU-DIE.jpg');  // Change this to your image file
+        }
+
+        function setup() {
+            createCanvas(windowWidth, windowHeight);
+        }
+
+        function draw() {
+                background(0);
+
+                if (frameCount - lastChange > 20 + random(1, 30)) {
+                    sliceWidth = int(random(1, 2));
+                    lastChange = frameCount;
+                }
+
+                let numSlices = width / sliceWidth;
+
+                // Draw first image as the base, scaled to fit the canvas
+                image(imgA, 0, 0, width, height);
+
+                // Overlay slices from second image, making sure it is scaled the same way
+                for (let i = 0; i < numSlices; i++) {
+                    let x = i * sliceWidth;
+                    if (i % 2 === 0) {
+                        image(imgB, x, 0, sliceWidth, height, x * (imgB.width / width), 0, sliceWidth * (imgB.width / width), imgB.height);
+                    }
+                }
+}
+    </script>
+</body>
+</html>

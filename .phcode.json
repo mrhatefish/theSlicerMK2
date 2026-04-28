@@ -1,0 +1,7 @@
+{
+    "livePreviewUseDevServer": true,
+    "livePreviewServerProjectPath": "/",
+    "livePreviewHotReloadSupported": false,
+    "livePreviewFramework": "Custom",
+    "livePreviewServerURL": "http://localhost:8888/theCorbijnator/slicer_004.html"
+}

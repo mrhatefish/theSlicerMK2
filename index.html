@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>p5 Fullscreen Image</title>
+    <script src="https://cdn.jsdelivr.net/npm/p5@2.2.0/lib/p5.min.js"></script>
+    <script src="timelines.js"></script>
+    <style>
+        @font-face {
+            font-family: 'Google Sans Flex';
+            src: url('assets/GoogleSansFlex.ttf') format('truetype');
+        }
+
+        body {
+            font-family: 'GoogleSansFlex', sans-serif;
+        }
+
+        #defaultCanvas0 {
+            overflow: hidden !important;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 500;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.0);
+        }
+
+        .modal.open {
+            display: block;
+            /* default */
+        }
+
+        .modal.open.flex {
+            display: flex;
+            /* only when flex class is also present */
+        }
+
+        .modal.close {
+            display: none !important;
+        }
+
+        .modal.flex {
+            /*display: flex;*/
+            justify-content: center;
+            /* horizontal */
+            align-items: center;
+            /* vertical */
+
+        }
+
+        .blackCircle {
+            width: 47vw;
+            height: 47vw;
+            background: black;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulse 3s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+            }
+
+            10% {
+                transform: translate(-50%, -50%) scale(0.55);
+            }
+
+            20% {
+                transform: translate(-50%, -50%) scale(0.60);
+            }
+
+            30% {
+                transform: translate(-50%, -50%) scale(1.3);
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+
+        .redCircle {
+            width: 47vw;
+            height: 47vw;
+            background: red;
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .txtReplaceableItems {
+            font-style: italic;
+            font-weight: 700;
+            font-size: 12vw;
+            color: white;
+            z-index: 400 !important;
+        }
+
+        #txtReplaceableItems {
+            z-index: 650 !important;
+
+        }
+
+        .txtYouAreMagenta {
+
+            font-weight: 900;
+            font-size: 20vw;
+            color: rgb(252, 71, 183, 1);
+
+        }
+
+        #txtYouAreMagenta {
+            z-index: 450;
+        }
+
+        .fade-in {
+            opacity: 1;
+            animation-name: fadeInOpacity;
+            animation-iteration-count: 1;
+            animation-timing-function: ease-in;
+            animation-duration: 10s;
+        }
+
+        @keyframes fadeInOpacity {
+            0% {
+                opacity: 0;
+            }
+
+            80% {
+                opacity: 0.90;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+
+<body style="margin:0; overflow:hidden;">
+    <script>
+
+        // ─── TIMELINE STATE ───────────────────────────────────────────────
+        let timeline = TL_DEFAULT; //loads the default timeline from timelines.js 
+        let startTime;
+        let totalTime;
+        let elapsedTime = 0;
+        let currentStep = -1;
+
+        // ─── ALTERNATE IMAGE STATE ────────────────────────────────────────
+        let altIndex = 0;
+        let lastSwitch = 0;
+
+        // ─── PARTICLES ────────────────────────────────────────────────────
+        let particles = [];
+
+        // ─── IMAGE PRELOAD ────────────────────────────────────────────────
+        let loading = true;
+        let imageMap = {};
+        let rawImages = `
+        1-nasci.jpg
+        2-cresci.jpg
+        3-lavora.jpg
+        4-consuma.jpg
+        5-muori.jpg
+        BEFORE-YOU-DIE.jpg
+        BUY-3.jpg
+        BUY-pink.jpg
+        BUY.jpg
+        circleBerni.jpg
+        circleBlack.jpg
+        circleWhite.jpg
+        die.jpg
+        thenDie.jpg
+        amazon.jpg
+        caterpillar.jpg
+        google.jpg
+        microsoft.jpg
+        openAI.jpg
+        bo.jpg
+        coke.jpg
+        macdonalds.jpg
+        nvidia.jpg
+        palantir.jpg
+    `;
+        let imagesArr = rawImages.split('\n').map(f => f.trim()).filter(f => f.length > 0);
+
+        // ─── VIDEO PRELOAD ────────────────────────────────────────────────
+        let videoMap = {};
+        let rawVideos = `
+        detectPeopleAbove_002_fixed.mp4
+        detectPeopleSub_002_fixed.mp4
+    `;
+        let videosArr = rawVideos.split('\n').map(f => f.trim()).filter(f => f.length > 0);
+
+        // ─── VIDEO JUMP TIMER ─────────────────────────────────────────────
+        let jumpInterval = 3000;
+        let lastJump = 0;
+
+
+        // ─────────────────────────────────────────────────────────────────
+        // HELPERS
+        // ─────────────────────────────────────────────────────────────────
+
+        function getImage(name) {
+            return imageMap[name];
+        }
+
+        function getVideo(name) {
+            return videoMap[name];
+        }
+
+        function loadImageAsync(path) {
+            return new Promise((resolve, reject) => {
+                loadImage(path, resolve, reject);
+            });
+        }
+
+        function newParticle() {
+            let r = min(windowWidth, windowHeight) * 0.28;
+            return [
+                random(TWO_PI),           // [0] angle
+                r + random(10, 5000),     // [1] dist
+                random(0.0002, 0.0020),   // [2] speed
+                random(1, 4),             // [3] size
+                random(20, 70),           // [4] alpha
+                random(TWO_PI)            // [5] alphaOffset
+            ];
+        }
+
+        function modalManager(modalID, closeModals) {
+            const modals = document.querySelectorAll(".modal");
+            if (closeModals > 0) {
+                for (let i = 0; i < modals.length; i++) {
+                    modals[i].classList.remove("open");
+                }
+            }
+            if (modalID) {
+                const modal = document.getElementById(modalID);
+                if (modal) modal.classList.add("open");
+            }
+        }
+
+        function pauseAllVideos() {
+            for (let name of videosArr) {
+                let v = videoMap[name];
+                if (v && v.elt) v.pause();
+            }
+        }
+
+
+        // ─────────────────────────────────────────────────────────────────
+        // IMAGEFX
+        // ─────────────────────────────────────────────────────────────────
+
+        const ImageFX = {
+
+            showImage(img, modalID, closeModals) {
+                if (!img) {
+                    console.error("IMG IS UNDEFINED");
+                    background(255, 0, 0);
+                    return;
+                }
+                if (!img.width || !img.height) {
+                    console.error("IMG NOT READY:", img);
+                    background(0, 0, 255);
+                    return;
+                }
+                modalManager(modalID, closeModals);
+
+                let canvasRatio = width / height;
+                let imgRatio = img.width / img.height;
+                let drawWidth, drawHeight;
+
+                if (imgRatio > canvasRatio) {
+                    drawWidth = width;
+                    drawHeight = width / imgRatio;
+                } else {
+                    drawHeight = height;
+                    drawWidth = height * imgRatio;
+                }
+
+                let x = (width - drawWidth) / 2;
+                let y = (height - drawHeight) / 2;
+                image(img, x, y, drawWidth, drawHeight);
+            },
+
+            alternateImage(imgsArr, speed, modalID, closeModals) {
+                modalManager(modalID, closeModals);
+                if (millis() - lastSwitch > speed) {
+                    altIndex = (altIndex + 1) % imgsArr.length;
+                    lastSwitch = millis();
+                }
+                ImageFX.showImage(getImage(imgsArr[altIndex]), null, 0);
+            },
+
+            slicerImage(imgA, imgB, noise, lineweight, modalID, closeModals) {
+                background(0);
+                var n = noise;
+                var lw = lineweight;
+                var lastChange = 0;
+                var sliceWidth = 1;
+
+                modalManager(modalID, closeModals);
+                let morphAmount = (sin(frameCount * 0.1) + 1) / 2;
+
+                push();
+                tint(255, 255 * (1 - morphAmount));
+                image(imgA, 0, 0, width, height);
+                tint(255, 255 * morphAmount);
+                image(imgB, 0, 0, width, height);
+                pop();
+
+                if (frameCount - lastChange > 4 + random(1, 3)) {
+                    sliceWidth = lw;
+                    lastChange = frameCount;
+                }
+
+                let numSlices = width / sliceWidth;
+                for (let i = 0; i < numSlices; i++) {
+                    let x = i * sliceWidth;
+                    if (i % 2 === 0) {
+                        image(imgB, x + n * random(1, 2), 0, sliceWidth, height,
+                            x * (imgB.width / width), 0,
+                            sliceWidth * (imgB.width / width), imgB.height);
+                    }
+                }
+            }
+        };
+
+
+        // ─────────────────────────────────────────────────────────────────
+        // VIDEOFX
+        // ─────────────────────────────────────────────────────────────────
+
+        const VideoFX = {
+
+            showVideo(vid, modalID, closeModals) {
+                if (!vid || !vid.elt) {
+                    console.warn("VIDEO NOT READY");
+                    return;
+                }
+                // start playing if not already
+                if (vid.elt.paused) vid.play();
+
+                modalManager(modalID, closeModals);
+
+                let canvasRatio = width / height;
+                let vidRatio = vid.elt.videoWidth / vid.elt.videoHeight;
+                let drawWidth, drawHeight;
+
+                // if (vidRatio > canvasRatio) {
+                //     /*                     drawWidth = width;
+                //                         drawHeight = width / vidRatio; */
+                // } else {
+                //     drawHeight = height;
+                //     drawWidth = height * vidRatio;
+                // }
+
+                drawHeight = height;
+                drawWidth = height * vidRatio;
+
+                let x = (width - drawWidth) / 2;
+                let y = (height - drawHeight) / 2;
+                image(vid, x, y, drawWidth, drawHeight);
+            }
+        };
+
+
+        // ─────────────────────────────────────────────────────────────────
+        // GEN
+        // ─────────────────────────────────────────────────────────────────
+
+        const Gen = {
+
+            rect() {
+                background(125);
+                rectMode(CENTER);
+                fill("green");
+                noStroke();
+                rect(width / 2, height / 2, 200, 100);
+            },
+
+            circleHaze(modalID, closeModals) {
+                modalManager(modalID, closeModals);
+                background(0, 0, 4);
+
+                let cx = width / 2;
+                let cy = height / 2;
+                let r = min(width, height) * 0.28;
+                let t = millis() * 0.001;
+
+                for (let i = 6; i >= 1; i--) {
+                    let pulse = sin(t * 0.8 + i * 0.4) * 0.5 + 0.5;
+                    let haze = r + i * 18 + pulse * 22;
+                    let alpha = map(i, 6, 1, 4, 18) * pulse;
+                    noStroke();
+                    fill(200, 8, 98, alpha);
+                    circle(cx, cy, haze * 2);
+                }
+
+                let glowPulse = sin(t * 1.2) * 0.5 + 0.5;
+                for (let g = 12; g >= 1; g--) {
+                    let glowR = r + g * 3;
+                    let glowA = map(g, 12, 1, 1, 12) * (0.4 + glowPulse * 0.6);
+                    fill(210, 5, 100, glowA);
+                    circle(cx, cy, glowR * 2);
+                }
+
+                noStroke();
+                fill(210, 6, 99, 100);
+                circle(cx, cy, r * 2);
+            },
+
+            circleHazeParticle() {
+                background(0, 0, 4);
+
+                let cx = width / 2;
+                let cy = height / 2;
+                let r = min(width, height) * 0.28;
+                let t = millis() * 0.001;
+
+                noStroke();
+                for (let p of particles) {
+                    p[0] += p[2];  // angle += speed
+                    let px = cx + cos(p[0]) * p[1];
+                    let py = cy + sin(p[0]) * p[1];
+                    let flicker = sin(t * p[2] * 100 + p[5]) * 0.5 + 0.5;
+                    let a = p[4] * flicker;
+                    fill(205, 10, 100, a);
+                    circle(px, py, p[3]);
+                }
+
+                fill(210, 6, 99, 100);
+                circle(cx, cy, r * 2);
+
+                fill(200, 3, 100, 60);
+                circle(cx - r * 0.18, cy - r * 0.18, r * 0.7);
+            }
+        };
+
+
+        // ─────────────────────────────────────────────────────────────────
+        // DISPATCH
+        // ─────────────────────────────────────────────────────────────────
+
+        function dispatch(step) {
+            const { action, args, mod } = timeline[step];
+            switch (action) {
+                case "showImage":
+                    ImageFX.showImage(getImage(args[0]), mod[0] ?? null, mod[1] ?? 0);
+                    break;
+                case "alternateImage":
+                    ImageFX.alternateImage(args[0], args[1], mod[0] ?? null, mod[1] ?? 0);
+                    break;
+                case "slicerImage":
+                    ImageFX.slicerImage(getImage(args[0]), getImage(args[1]), args[2], args[3], mod[0] ?? null, mod[1] ?? 0);
+                    break;
+                case "rect":
+                    Gen.rect();
+                    break;
+                case "circleHaze":
+                    Gen.circleHaze(mod[0] ?? null, mod[1] ?? 0);
+                    break;
+                case "circleHazeParticle":
+                    Gen.circleHazeParticle();
+                    break;
+                case "showVideo":
+                    VideoFX.showVideo(getVideo(args[0]), mod[0] ?? null, mod[1] ?? 0);
+                    break;
+            }
+        }
+
+
+        // ─────────────────────────────────────────────────────────────────
+        // SETUP
+        // ─────────────────────────────────────────────────────────────────
+
+        async function setup() {
+            initMIDI();
+            let cnv = createCanvas(windowWidth, windowHeight);
+            cnv.style('z-index', '1');
+            colorMode(HSB, 360, 100, 100, 100);
+
+            // spawn particles
+            for (let i = 0; i < 4000; i++) {
+                particles.push(newParticle());
+            }
+
+            // define timeline
+            startTime = millis();
+            //timeline = timeline1
+            totalTime = timeline.reduce((acc, e) => acc + e.time, 0);
+
+            // preload images
+            try {
+                let promises = imagesArr.map(name =>
+                    loadImageAsync("assets/" + name)
+                        .then(img => ({ name, img }))
+                        .catch(err => { console.warn("Failed:", name); return null; })
+                );
+                let results = await Promise.all(promises);
+                for (let r of results) {
+                    if (r) imageMap[r.name] = r.img;
+                }
+            } finally {
+                loading = false;
+            }
+
+            // preload videos — synchronous, no waiting
+            for (let name of videosArr) {
+                let v = createVideo("assets/" + name);
+                v.hide();
+                v.loop();
+                v.volume(0);
+                videoMap[name] = v;
+            }
+        }
+
+
+        // ─────────────────────────────────────────────────────────────────
+        // DRAW
+        // ─────────────────────────────────────────────────────────────────
+
+        function draw() {
+            background(0);
+            if (loading) return;
+
+            elapsedTime = millis() - startTime;
+
+            if (elapsedTime >= totalTime) {
+                startTime = millis();
+                elapsedTime = 0;
+                currentStep = -1;
+            }
+
+            // timeline lookup
+            let cursor = 0;
+            for (let i = 0; i < timeline.length; i++) {
+                if (elapsedTime >= cursor && elapsedTime < cursor + timeline[i].time) {
+                    if (currentStep !== i) {
+                        currentStep = i;
+                        // pause all videos on step change — clean slate
+                        pauseAllVideos();
+
+                        if (!timeline[i].continuous) dispatch(i);  // one-shot
+                    }
+                    if (timeline[i].continuous) dispatch(i);       // every frame
+
+                    break;
+                }
+                cursor += timeline[i].time;
+            }
+
+            // gaussian video jump timer — runs independently of timeline
+            if (millis() - lastJump > jumpInterval) {
+                lastJump = millis();
+                jumpInterval = constrain(randomGaussian(3000, 800), 500, 8000);
+                for (let name of videosArr) {
+                    let v = videoMap[name];
+                    if (v && v.elt && !v.elt.paused) {
+                        v.time(random(v.duration()));
+                    }
+                }
+            }
+        }
+
+
+        // ─────────────────────────────────────────────────────────────────
+        // RESIZE
+        // ─────────────────────────────────────────────────────────────────
+
+        function windowResized() {
+            resizeCanvas(windowWidth, windowHeight);
+        }
+
+        // ─────────────────────────────────────────────────────────────────
+        // MIDI
+        // ─────────────────────────────────────────────────────────────────
+
+        function initMIDI() {
+            navigator.requestMIDIAccess().then(midi => {
+                for (let input of midi.inputs.values()) {
+                    console.log("MIDI input found:", input.name);
+                    input.onmidimessage = (msg) => {
+                        const [status, note, velocity] = msg.data;
+                        // 144 = note on, velocity > 0 = actually pressed
+                        if (status === 144 && velocity > 0) {
+                            if (MIDI_MAP[note]) {
+                                switchTimeline(MIDI_MAP[note]);
+                                modalManager(null, 1);
+                                console.log("switched to:", note);
+                            }
+                        }
+                    };
+                }
+            }).catch(err => {
+                console.warn("MIDI failed:", err);
+            });
+        }
+
+        function switchTimeline(newTimeline) {
+            pauseAllVideos();
+            timeline = newTimeline;
+            totalTime = newTimeline.reduce((acc, e) => acc + e.time, 0);
+            startTime = millis();
+            elapsedTime = 0;
+            currentStep = -1;
+        }
+
+    </script>
+
+    <!--html-->
+    <div id="blackCircle" class="modal">
+        <div class="blackCircle"></div>
+    </div>
+
+    <div id="redCircle" class="modal">
+        <div class="redCircle"></div>
+    </div>
+
+    <div id="txtReplaceableItems" class="modal flex">
+        <div class="txtReplaceableItems fade-in">
+            <!--<img src="assets/Replaceable.png"></img>-->
+            <p>REPLACEABLE</p>
+
+        </div>
+    </div>
+
+    <div id="txtYouAreMagenta" class="modal">
+        <div class="txtYouAreMagenta">
+
+            <p>YOU ARE</p>
+
+        </div>
+    </div>
+
+</body>
+
+</html>

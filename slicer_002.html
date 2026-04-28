@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video Delay Effect</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+</head>
+<body>
+    <script>
+        let vidA, vidB;
+        let delayTime = 1; // Delay in seconds
+        let sliceWidth = 1; // Initial slice width
+        let lastChange = 0;
+        let buffer;
+
+        function setup() {
+            createCanvas(640*1.8, 360*1.8);
+            
+            // Load vidA (starts immediately)
+            vidA = createVideo('Aleph AF 1 - HD 1080p.mp4', () => {
+                vidA.loop();
+                vidA.hide();
+            });
+
+            // Load vidB (delayed start)
+            vidB = createVideo('Aleph AF 1 - HD 1080p.mp4', () => {
+                vidB.hide();
+                vidB.time();
+                vidB.speed(0.48)
+                setTimeout(() => {
+                    vidB.loop(); // Start vidB after 20 seconds
+                }, delayTime * 1000);
+            });
+        }
+
+        function draw() {
+            background(0);
+            if (frameCount - lastChange > 20+random(1,30)) {
+                sliceWidth = int(random(1, 2)); // New width between 5 and 50 pixels
+                lastChange = frameCount;
+            }
+            let numSlices = width / sliceWidth;
+            
+            
+
+            if (vidA) {
+                image(vidA, 0, 0, width, height); // Draw vidA as the background
+                
+            }
+
+            if (vidB && vidB.time() >= delayTime) {
+                    for (let i = 0; i < numSlices; i++) {
+                    let x = i * sliceWidth;
+
+                    // Alternate slices between vidA and filtered vidB
+                    if (i % 2 === 0) {
+                        image(vidB, x, 0, sliceWidth, height, x, 0, sliceWidth+int(random(1,10)), height);
+                    } 
+                }
+                
+               
+            }
+        }
+    </script>
+</body>
+</html>
