@@ -20,7 +20,7 @@ C5  = 72
 
 
 const IMG_CIRCLE_B_W = ["circleBlack.jpg", "circleWhite.jpg"]
-const IMG_LOGHI = ["amazon.jpg", "caterpillar.jpg", "google.jpg", "microsoft.jpg", "openAI.jpg",
+const IMG_LOGHI = ["RANDOM", "amazon.jpg", "caterpillar.jpg", "google.jpg", "microsoft.jpg", "openAI.jpg",
     "bo.jpg", "coke.jpg", "macdonalds.jpg", "nvidia.jpg", "palantir.jpg"]
 
 const TL_DEFAULT = [

@@ -299,9 +299,32 @@
 
             alternateImage(imgsArr, speed, modalID, closeModals) {
                 modalManager(modalID, closeModals);
+
+                let mode = imgsArr[0];          // "forward", "backward", "random", "pingpong"
+                let images = imgsArr.slice(1);    // actual images array
+
                 if (millis() - lastSwitch > speed) {
-                    altIndex = (altIndex + 1) % imgsArr.length;
                     lastSwitch = millis();
+
+                    switch (mode) {
+                        case "FORWARD":
+                            altIndex = (altIndex + 1) % images.length;
+                            break;
+                        case "BACKWARD":
+                            altIndex = (altIndex - 1 + images.length) % images.length;
+                            break;
+                        case "RANDOM":
+                            altIndex = floor(random(images.length));
+                            break;
+                        // case "pingpong":
+                        //     altIndex += pingpongDir;
+                        //     if (altIndex >= images.length - 1 || altIndex <= 0) {
+                        //         pingpongDir *= -1;  // flip direction at ends
+                        //     }
+                        //     break;
+                        default:
+                            altIndex = (altIndex + 1) % images.length;  // fallback to forward
+                    }
                 }
                 ImageFX.showImage(getImage(imgsArr[altIndex]), null, 0);
             },
@@ -552,6 +575,10 @@
                 if (elapsedTime >= cursor && elapsedTime < cursor + timeline[i].time) {
                     if (currentStep !== i) {
                         currentStep = i;
+                        altIndex = 0;  // reset for alternateImage
+                        lastSwitch = 0;  // reset for alternateImage
+
+
                         // pause all videos on step change — clean slate
                         pauseAllVideos();
 
@@ -618,6 +645,8 @@
             startTime = millis();
             elapsedTime = 0;
             currentStep = -1;
+            altIndex = 0;  // 👈 reset here
+            lastSwitch = 0;  // 👈 and this too
         }
 
     </script>
