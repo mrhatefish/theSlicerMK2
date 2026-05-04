@@ -7,6 +7,75 @@
     <script src="https://cdn.jsdelivr.net/npm/p5@2.2.0/lib/p5.min.js"></script>
     <script src="timelines.js"></script>
     <style>
+        :root {
+            /* AMAZON */
+            --amazon-orange: #FF9900;
+            --amazon-dark: #232F3E;
+            --amazon-white: #FFFFFF;
+
+            /* CATERPILLAR */
+            --cat-yellow: #FFCD11;
+            --cat-black: #000000;
+            --cat-white: #FFFFFF;
+
+            /* GOOGLE */
+            --google-blue: #4285F4;
+            --google-red: #EA4335;
+            --google-yellow: #FBBC05;
+            --google-green: #34A853;
+            --google-white: #FFFFFF;
+            --google-dark: #202124;
+
+            /* MICROSOFT */
+            --ms-red: #F25022;
+            --ms-green: #7FBA00;
+            --ms-blue: #00A4EF;
+            --ms-yellow: #FFB900;
+            --ms-dark: #232323;
+            --ms-white: #FFFFFF;
+
+            /* OPENAI */
+            --openai-black: #000000;
+            --openai-white: #FFFFFF;
+            --openai-grey: #343541;
+
+            /* COCA-COLA */
+            --coke-red: #F40009;
+            --coke-black: #000000;
+            --coke-white: #FFFFFF;
+            --coke-silver: #C0C0C0;
+
+            /* McDONALD'S */
+            --mc-yellow: #FFC72C;
+            --mc-red: #DA291C;
+            --mc-dark: #27251F;
+            --mc-white: #FFFFFF;
+
+            /* NVIDIA */
+            --nvidia-green: #76B900;
+            --nvidia-black: #000000;
+            --nvidia-white: #FFFFFF;
+            --nvidia-silver: #A0A0A0;
+
+            /* PALANTIR */
+            --palantir-black: #000000;
+            --palantir-dark: #1A1A1A;
+            --palantir-white: #FFFFFF;
+            --palantir-grey: #6B6B6B;
+
+            /* TESLA */
+            --tesla-red: #E82127;
+            --tesla-black: #000000;
+            --tesla-white: #FFFFFF;
+            --tesla-grey: #393C41;
+
+            /* BOEING */
+            --boeing-blue: #1D4F8C;
+            --boeing-dark: #00205B;
+            --boeing-white: #FFFFFF;
+            --boeing-grey: #7D8083;
+        }
+
         @font-face {
             font-family: 'Google Sans Flex';
             src: url('assets/GoogleSansFlex.ttf') format('truetype');
@@ -14,6 +83,7 @@
 
         body {
             font-family: 'GoogleSansFlex', sans-serif;
+            overflow: hidden !important;
         }
 
         #defaultCanvas0 {
@@ -28,7 +98,7 @@
             top: 0;
             width: 100%;
             height: 100%;
-            overflow: auto;
+            overflow: hidden;
             background-color: rgba(0, 0, 0, 0.0);
         }
 
@@ -56,36 +126,30 @@
         }
 
         .blackCircle {
-            width: 47vw;
-            height: 47vw;
+            width: 45vw;
+            height: 45vw;
             background: black;
             border-radius: 50%;
             position: absolute;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%);
-            animation: pulse 3s ease-in-out infinite;
+            transform: translate(50%, -50%);
+            animation: pulse 29s ease-in-out infinite;
+            -webkit-box-shadow: 0px 0px 22px 5px #2E2E2E;
+            box-shadow: 0px 0px 22px 5px #2E2E2E;
         }
 
         @keyframes pulse {
             0% {
-                transform: translate(-50%, -50%) scale(0.5);
+                transform: translate(-50%, -50%) scale(1.1);
             }
 
-            10% {
-                transform: translate(-50%, -50%) scale(0.55);
-            }
-
-            20% {
-                transform: translate(-50%, -50%) scale(0.60);
-            }
-
-            30% {
-                transform: translate(-50%, -50%) scale(1.3);
+            50% {
+                transform: translate(-50%, -50%) scale(1.15);
             }
 
             100% {
-                transform: translate(-50%, -50%) scale(1);
+                transform: translate(-50%, -50%) scale(1.1);
             }
         }
 
@@ -146,6 +210,39 @@
                 opacity: 1;
             }
         }
+
+        #eightHours {
+            color: var(--coke-silver);
+            font-size: 8vw;
+        }
+
+        #eightHours div {
+            width: 100%;
+            height: 33%;
+            display: flex;
+            align-items: center;
+            /* vertical center */
+        }
+
+        @keyframes tickerLeft {
+            from {
+                transform: translateX(100vw);
+            }
+
+            to {
+                transform: translateX(-100%);
+            }
+        }
+
+        @keyframes tickerRight {
+            from {
+                transform: translateX(-100%);
+            }
+
+            to {
+                transform: translateX(100vw);
+            }
+        }
     </style>
 </head>
 
@@ -169,6 +266,7 @@
         // ─── IMAGE PRELOAD ────────────────────────────────────────────────
         let loading = true;
         let imageMap = {};
+
         let rawImages = `
         1-nasci.jpg
         2-cresci.jpg
@@ -194,7 +292,48 @@
         macdonalds.jpg
         nvidia.jpg
         palantir.jpg
+        apple.jpg
+        bayer.jpg
+        danone.jpg
+        disney.jpg
+        exxon.jpg
+        gnamo.jpg
+        meta.jpg
+        monsanto.jpg
+        nestle.jpg
+        netflix.jpg
+        shell.jpg
+        spotify.jpg
+        tesla.jpg
+        tiktok.jpg
+        x.jpg
+        time0100.png
+        time0200.png
+        time0300.png
+        time0400.png
+        time0500.png
+        time0600.png
+        time0700.png
+        time0800.png
+        time0900.png
+        time1000.png
+        time1100.png
+        time1200.png
+        time1300.png
+        time1400.png
+        time1500.png
+        time1600.png
+        time1700.png
+        time1800.png
+        time1900.png
+        time2000.png
+        time2100.png
+        time2200.png
+        time2300.png
+        time2400.png
     `;
+
+
         let imagesArr = rawImages.split('\n').map(f => f.trim()).filter(f => f.length > 0);
 
         // ─── VIDEO PRELOAD ────────────────────────────────────────────────
@@ -209,6 +348,8 @@
         let jumpInterval = 3000;
         let lastJump = 0;
 
+        //------- PAVE function stuff
+        let paveSquares = [];
 
         // ─────────────────────────────────────────────────────────────────
         // HELPERS
@@ -311,22 +452,19 @@
                             altIndex = (altIndex + 1) % images.length;
                             break;
                         case "BACKWARD":
-                            altIndex = (altIndex - 1 + images.length) % images.length;
+                            images = images.reverse();
+                            altIndex = (altIndex + 1) % images.length;
                             break;
                         case "RANDOM":
                             altIndex = floor(random(images.length));
                             break;
-                        // case "pingpong":
-                        //     altIndex += pingpongDir;
-                        //     if (altIndex >= images.length - 1 || altIndex <= 0) {
-                        //         pingpongDir *= -1;  // flip direction at ends
-                        //     }
-                        //     break;
+
                         default:
                             altIndex = (altIndex + 1) % images.length;  // fallback to forward
                     }
                 }
-                ImageFX.showImage(getImage(imgsArr[altIndex]), null, 0);
+                ImageFX.showImage(getImage(images[altIndex]), null, 0);
+
             },
 
             slicerImage(imgA, imgB, noise, lineweight, modalID, closeModals) {
@@ -471,7 +609,46 @@
 
                 fill(200, 3, 100, 60);
                 circle(cx - r * 0.18, cy - r * 0.18, r * 0.7);
+            },
+            pave(N, colors) {
+                // init once when paveSquares is empty
+                if (paveSquares.length === 0) {
+                    let s = Math.sqrt((width * height) / N);
+                    let cols = Math.floor(width / s);
+                    let rows = Math.floor(height / s);
+
+                    for (let row = 0; row < rows; row++) {
+                        for (let col = 0; col < cols; col++) {
+                            paveSquares.push({
+                                x: col * s,
+                                y: row * s,
+                                size: s,
+                                colorIndex: Math.floor(Math.random() * colors.length),
+                                speed: random(200, 1000),
+                                lastSwitch: random(1000)   // stagger so they don't all change at once
+                            });
+                        }
+                    }
+                }
+
+                // draw every frame
+                colorMode(RGB);  // hex colors need RGB
+                noStroke();
+                for (let sq of paveSquares) {
+                    if (millis() - sq.lastSwitch > sq.speed) {
+                        //sq.colorIndex = (sq.colorIndex + 1) % colors.length;
+                        sq.colorIndex = Math.floor(Math.random() * colors.length);
+                        sq.lastSwitch = millis();
+                    }
+                    fill(colors[sq.colorIndex]);
+                    rect(sq.x, sq.y, sq.size, sq.size);
+                }
+                colorMode(HSB, 360, 100, 100, 100);  // restore for everything else
             }
+
+
+
+
         };
 
 
@@ -503,8 +680,12 @@
                 case "showVideo":
                     VideoFX.showVideo(getVideo(args[0]), mod[0] ?? null, mod[1] ?? 0);
                     break;
+                case "pave":
+                    Gen.pave(args[0], args[1]);
+                    break;
             }
         }
+
 
 
         // ─────────────────────────────────────────────────────────────────
@@ -575,8 +756,20 @@
                 if (elapsedTime >= cursor && elapsedTime < cursor + timeline[i].time) {
                     if (currentStep !== i) {
                         currentStep = i;
-                        altIndex = 0;  // reset for alternateImage
+                        altIndex = -1;  // reset for alternateImage, -1 otherwise skip the first image
                         lastSwitch = 0;  // reset for alternateImage
+                        if (timeline[i].action !== "pave" && timeline[i].action !== "dots") {
+                            paveSquares = [];
+                        }
+
+                        if (timeline[i].action === "pave" || timeline[i].action === "dots") {
+                            let prevIndex = i > 0 ? i - 1 : timeline.length - 1;  // wrap to last step
+                            let prevIsPave = timeline[prevIndex].action === "pave" || timeline[prevIndex].action === "dots";
+                            if (!prevIsPave || timeline[prevIndex].args[0] !== timeline[i].args[0]) {
+                                paveSquares = [];
+                            }
+                        }
+
 
 
                         // pause all videos on step change — clean slate
@@ -675,6 +868,25 @@
 
         </div>
     </div>
+
+    <div id="eightHours" class="modal flex" style="flex-direction: column; justify-content: center; height: 100%;">
+
+        <div style="overflow: hidden; white-space: nowrap;">
+            <span style="display: inline-block; animation: tickerLeft 4s linear infinite;">
+                EIGHT HOURS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            </span>
+        </div>
+
+        <div></div>
+
+        <div style="overflow: hidden; white-space: nowrap;">
+            <span style="display: inline-block; animation: tickerRight 5s linear infinite;">
+                ARE OURS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+            </span>
+        </div>
+
+    </div>
+
 
 </body>
 
