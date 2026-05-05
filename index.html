@@ -249,6 +249,10 @@
 <body style="margin:0; overflow:hidden;">
     <script>
 
+        //slicer function
+        let slicerLastChange = 0;
+        let slicerSliceWidth = 1;
+
         // ─── TIMELINE STATE ───────────────────────────────────────────────
         let timeline = TL_DEFAULT; //loads the default timeline from timelines.js 
         let startTime;
@@ -468,11 +472,10 @@
             },
 
             slicerImage(imgA, imgB, noise, lineweight, modalID, closeModals) {
+                colorMode(RGB);  // 👈
                 background(0);
                 var n = noise;
                 var lw = lineweight;
-                var lastChange = 0;
-                var sliceWidth = 1;
 
                 modalManager(modalID, closeModals);
                 let morphAmount = (sin(frameCount * 0.1) + 1) / 2;
@@ -484,21 +487,24 @@
                 image(imgB, 0, 0, width, height);
                 pop();
 
-                if (frameCount - lastChange > 4 + random(1, 3)) {
-                    sliceWidth = lw;
-                    lastChange = frameCount;
+                if (frameCount - slicerLastChange > 4 + random(1, 3)) {
+                    slicerSliceWidth = lw;
+                    slicerLastChange = frameCount;
                 }
 
-                let numSlices = width / sliceWidth;
+                let numSlices = width / slicerSliceWidth;
                 for (let i = 0; i < numSlices; i++) {
-                    let x = i * sliceWidth;
+                    let x = i * slicerSliceWidth;
                     if (i % 2 === 0) {
-                        image(imgB, x + n * random(1, 2), 0, sliceWidth, height,
+                        image(imgB, x + n * random(1, 2), 0, slicerSliceWidth, height,
                             x * (imgB.width / width), 0,
-                            sliceWidth * (imgB.width / width), imgB.height);
+                            slicerSliceWidth * (imgB.width / width), imgB.height);
                     }
                 }
+                colorMode(HSB, 360, 100, 100, 100);  // 👈
             }
+
+
         };
 
 
@@ -644,6 +650,24 @@
                     rect(sq.x, sq.y, sq.size, sq.size);
                 }
                 colorMode(HSB, 360, 100, 100, 100);  // restore for everything else
+            },
+            showText(bgColor, textColor, fontSize, txt) {
+                // args: [bgColor, textColor, fontSize, txt]
+                // bgColor:   hex string e.g. "#000000"
+                // textColor: hex string e.g. "#FFFFFF"
+                // fontSize:  % of canvas height e.g. 0.15 = 15%
+                // txt:       string e.g. "REPLACEABLE"
+                // timeline example:
+                // { time: 5000, action: "showText", args: ["#000000", "#FFFFFF", 0.15, "REPLACEABLE"], mod: [null, 0], continuous: false }
+                colorMode(RGB);
+                background(bgColor);
+                fill(textColor);
+                noStroke();
+                textAlign(CENTER, CENTER);
+                textSize(height * fontSize);
+                textFont('Google Sans Flex');
+                text(txt, width / 2, height / 2);
+                colorMode(HSB, 360, 100, 100, 100);
             }
 
 
@@ -682,6 +706,9 @@
                     break;
                 case "pave":
                     Gen.pave(args[0], args[1]);
+                    break;
+                case "showText":
+                    Gen.showText(args[0], args[1], args[2], args[3]);
                     break;
             }
         }
@@ -755,6 +782,8 @@
             for (let i = 0; i < timeline.length; i++) {
                 if (elapsedTime >= cursor && elapsedTime < cursor + timeline[i].time) {
                     if (currentStep !== i) {
+                        slicerLastChange = 0;//reset for slicer
+                        slicerSliceWidth = 1;
                         currentStep = i;
                         altIndex = -1;  // reset for alternateImage, -1 otherwise skip the first image
                         lastSwitch = 0;  // reset for alternateImage

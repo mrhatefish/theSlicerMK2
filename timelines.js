@@ -1,3 +1,24 @@
+
+// ─────────────────────────────────────────────────────────────────
+// FUNCTION REFERENCE
+// ─────────────────────────────────────────────────────────────────
+
+// showImage        args: ["filename.jpg"]                                          mod: ["modalID", closeModals]  continuous: false
+// alternateImage   args: [["MODE", "img1.jpg", "img2.jpg"], speedMs]               mod: ["modalID", closeModals]  continuous: true
+//                  MODE: "FORWARD" | "BACKWARD" | "RANDOM"
+// slicerImage      args: ["imgA.jpg", "imgB.jpg", noise, lineweight]               mod: ["modalID", closeModals]  continuous: true
+// showVideo        args: ["video.mp4"]                                             mod: ["modalID", closeModals]  continuous: true
+// showText         args: ["#bgColor", "#textColor", fontSize, "text"]              mod: ["modalID", closeModals]  continuous: false
+//                  fontSize: % of canvas height e.g. 0.15 = 15%
+// pave             args: [N, CORP_COLORS]                                          mod: ["modalID", closeModals]  continuous: true
+//                  N: target number of squares e.g. 200
+// dots             args: [N, CORP_COLORS, radius]                                  mod: ["modalID", closeModals]  continuous: true
+//                  N: target number of dots, radius: size in pixels
+// circleHaze       args: []                                                        mod: ["modalID", closeModals]  continuous: true
+// circleHazeParticle args: []     
+
+
+
 // CORPORATE COLORS PALETTE:
 
 const CORP_COLORS = [
@@ -166,8 +187,10 @@ const TL_LOGHI = [
 ]
 
 const TL_TIME = [
-    { time: (IMG_TIMEFREE_1.length - 1) * 150, action: "alternateImage", args: [IMG_TIMEFREE_1, 150], mod: ["eightHours", 1], continuous: true },
+    { time: (IMG_TIMEFREE_1.length - 1) * 150, action: "alternateImage", args: [IMG_TIMEFREE_1, 150], mod: [null, 1], continuous: true },
+    { time: 3000, action: "showText", args: ["#FFFFFF", "#000000", 0.25, "EIGHT\nHOURS"], mod: [null, 0], continuous: true },
     { time: (IMG_TIMEJOB.length - 1) * 1210, action: "alternateImage", args: [IMG_TIMEJOB, 1210], mod: [null, 0], continuous: true },
+    { time: 3400, action: "showText", args: ["#FFFFFF", "#000000", 0.25, "ARE\nOURS"], mod: [null, 0], continuous: true },
     { time: (IMG_TIMEFREE_2.length - 1) * 150, action: "alternateImage", args: [IMG_TIMEFREE_2, 150], mod: [null, 0], continuous: true },
 
 
@@ -190,11 +213,26 @@ const TL_PAVE = [
     { time: 2000, action: "pave", args: [500, COLORS_Bs_RED], mod: [null, 0], continuous: true }
 ]
 
+const TL_TXT_REPLACEABLE = [
+    { time: 75, action: "showText", args: ["#000000", "#FFFFFF", 0.15, "REPLACEABLE"], mod: [null, 0], continuous: false },
+    { time: 100, action: "showText", args: ["#FFFFFF", "#000000", 0.15, "REPLACEABLE"], mod: [null, 0], continuous: false },
+    { time: 100, action: "showText", args: ["#000000", "#FFFFFF", 0.15, "YOU ARE"], mod: [null, 0], continuous: false },
+    { time: 75, action: "showText", args: ["#FFFFFF", "#000000", 0.15, "YOU ARE"], mod: [null, 0], continuous: false }
+]
+
+
+const TL_SLICER = [
+    { time: 10000, action: "slicerImage", args: ["BUY.jpg", "die.jpg", 1, 2], mod: [null, 0], continuous: true },
+]
+
 const MIDI_MAP = {
     48: TL_DEFAULT,      // C3
     50: TL_DETECT,     // D3
     52: TL_LOGHI,
     53: TL_BLACLHOLE,
     55: TL_TIME,
-    57: TL_PAVE
+    57: TL_PAVE,
+    59: TL_TXT_REPLACEABLE,
+    60: TL_SLICER
+
 }
