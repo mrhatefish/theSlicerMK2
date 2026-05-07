@@ -225,6 +225,10 @@ const TL_SLICER = [
     { time: 10000, action: "slicerImage", args: ["BUY.jpg", "die.jpg", 1, 2], mod: [null, 0], continuous: true },
 ]
 
+const TL_PAVEPICS = [
+    { time: 10000, action: "pavePics", args: [200, IMG_LOGHI, 0.5], mod: [null, 0], continuous: true },
+]
+
 const MIDI_MAP = {
     48: TL_DEFAULT,      // C3
     50: TL_DETECT,     // D3
@@ -233,6 +237,7 @@ const MIDI_MAP = {
     55: TL_TIME,
     57: TL_PAVE,
     59: TL_TXT_REPLACEABLE,
-    60: TL_SLICER
+    60: TL_SLICER,
+    62: TL_PAVEPICS
 
 }

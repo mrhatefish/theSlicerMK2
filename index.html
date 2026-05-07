@@ -249,6 +249,17 @@
 <body style="margin:0; overflow:hidden;">
     <script>
 
+
+        //pavePics
+        let pavePicsSquares = [];
+
+
+        //alternateText
+
+        let altTextIndex = 0;
+        let altColorIndex = 0;
+        let altTextSwitch = 0;
+
         //slicer function
         let slicerLastChange = 0;
         let slicerSliceWidth = 1;
@@ -502,6 +513,69 @@
                     }
                 }
                 colorMode(HSB, 360, 100, 100, 100);  // 👈
+            },
+            pavePics(N, images, cropAmount) {
+                // args: [N, ["img1.jpg","img2.jpg",...], cropAmount]
+                // N:          target number of cells e.g. 200
+                // images:     array of image filenames
+                // cropAmount: center crop % e.g. 0.5 = center 50%
+                // timeline example:
+                // { time: 10000, action: "pavePics", args: [200, ["amazon.jpg","google.jpg"], 0.5], mod: [null, 0], continuous: true }
+
+                if (pavePicsSquares.length === 0) {
+                    let s = Math.sqrt((width * height) / N);
+                    let cols = Math.floor(width / s);
+                    let rows = Math.floor(height / s);
+
+                    for (let row = 0; row < rows; row++) {
+                        for (let col = 0; col < cols; col++) {
+                            pavePicsSquares.push({
+                                x: col * s,
+                                y: row * s,
+                                size: s,
+                                imgIndex: Math.floor(Math.random() * images.length),
+                                speed: random(200, 1000),
+                                lastSwitch: random(1000)
+                            });
+                        }
+                    }
+                }
+
+                noStroke();
+                for (let sq of pavePicsSquares) {
+                    if (millis() - sq.lastSwitch > sq.speed) {
+                        sq.imgIndex = Math.floor(Math.random() * images.length);
+                        sq.lastSwitch = millis();
+                    }
+
+                    // black background for cell
+                    fill(0);
+                    noStroke();
+                    rect(sq.x, sq.y, sq.size, sq.size);
+
+                    let img = getImage(images[sq.imgIndex]);
+                    if (!img) continue;
+
+                    let sw = img.width * cropAmount;
+                    let sh = img.height * cropAmount;
+                    let sx = (img.width - sw) / 2;
+                    let sy = (img.height - sh) / 2;
+
+                    let imgRatio = sw / sh;
+                    let dw, dh;
+                    if (imgRatio > 1) {
+                        dw = sq.size;
+                        dh = sq.size / imgRatio;
+                    } else {
+                        dh = sq.size;
+                        dw = sq.size * imgRatio;
+                    }
+
+                    let dx = sq.x + (sq.size - dw) / 2;
+                    let dy = sq.y + (sq.size - dh) / 2;
+
+                    image(img, dx, dy, dw, dh, sx, sy, sw, sh);
+                }
             }
 
 
@@ -668,7 +742,38 @@
                 textFont('Google Sans Flex');
                 text(txt, width / 2, height / 2);
                 colorMode(HSB, 360, 100, 100, 100);
+            },
+            alternateText(texts, colors, fontSize, speed) {
+                // args: [["txt1","txt2",...], ["#color1","#color2",...], fontSize, speedMs]
+                // texts:    array of strings — cycles FORWARD
+                // colors:   array of hex — fgColor and bgColor offset by 1
+                //           different lengths from texts creates polyrhythm effect
+                // fontSize: % of canvas height e.g. 0.15
+                // speedMs:  ms per switch e.g. 200
+                // timeline example:
+                // { time: 10000, action: "alternateText", args: [["REPLACEABLE","DISPOSABLE"], ["#FFFFFF","#FF0000","#4285F4"], 0.15, 200], mod: [null, 0], continuous: true }
+
+                if (millis() - altTextSwitch > speed * randomGaussian(1, 0.2)) {
+                    altTextIndex = (altTextIndex + 1) % texts.length;
+                    altColorIndex = (altColorIndex + 1) % colors.length;
+                    altTextSwitch = millis();
+                }
+
+                let txt = texts[altTextIndex];
+                let fgColor = colors[altColorIndex];
+                let bgColor = colors[(altColorIndex + 1) % colors.length];
+
+                colorMode(RGB);
+                background(bgColor);
+                fill(fgColor);
+                noStroke();
+                textAlign(CENTER, CENTER);
+                textSize(height * fontSize);
+                textFont('Google Sans Flex');
+                text(txt, width / 2, height / 2);
+                colorMode(HSB, 360, 100, 100, 100);
             }
+
 
 
 
@@ -709,6 +814,9 @@
                     break;
                 case "showText":
                     Gen.showText(args[0], args[1], args[2], args[3]);
+                    break;
+                case "pavePics":
+                    ImageFX.pavePics(args[0], args[1], args[2]);
                     break;
             }
         }
@@ -782,18 +890,25 @@
             for (let i = 0; i < timeline.length; i++) {
                 if (elapsedTime >= cursor && elapsedTime < cursor + timeline[i].time) {
                     if (currentStep !== i) {
+                        //pavepics reset
+
                         slicerLastChange = 0;//reset for slicer
                         slicerSliceWidth = 1;
                         currentStep = i;
                         altIndex = -1;  // reset for alternateImage, -1 otherwise skip the first image
                         lastSwitch = 0;  // reset for alternateImage
-                        if (timeline[i].action !== "pave" && timeline[i].action !== "dots") {
+                        if (timeline[i].action !== "pave" &&
+                            timeline[i].action !== "dots" &&
+                            timeline[i].action !== "pavePics") {
                             paveSquares = [];
+                            pavePicsSquares = [];
                         }
 
                         if (timeline[i].action === "pave" || timeline[i].action === "dots") {
                             let prevIndex = i > 0 ? i - 1 : timeline.length - 1;  // wrap to last step
-                            let prevIsPave = timeline[prevIndex].action === "pave" || timeline[prevIndex].action === "dots";
+                            let prevIsPave = timeline[prevIndex].action === "pave" ||
+                                timeline[prevIndex].action === "dots" ||
+                                timeline[prevIndex].action === "pavePics";
                             if (!prevIsPave || timeline[prevIndex].args[0] !== timeline[i].args[0]) {
                                 paveSquares = [];
                             }
