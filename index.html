@@ -282,6 +282,14 @@
         let loading = true;
         let imageMap = {};
 
+        //----AUDIO
+        let audAnalyser = null;
+        let audData = null;
+        let audBassMax = 0;
+        let audMidMax = 0;
+        let audHighMax = 0;
+        let AUD_centroid = 0
+
         let rawImages = `
         1-nasci.jpg
         2-cresci.jpg
@@ -365,6 +373,8 @@
 
         //------- PAVE function stuff
         let paveSquares = [];
+        //------- blackHoleParticlesArr function stuff
+        let blackHoleParticlesArr = [];
 
         // ─────────────────────────────────────────────────────────────────
         // HELPERS
@@ -772,11 +782,22 @@
                 textFont('Google Sans Flex');
                 text(txt, width / 2, height / 2);
                 colorMode(HSB, 360, 100, 100, 100);
+            },
+
+            blackHoleParticles() {
+                for (let i = 0; i < 300; i++) {
+                    let p = new Particle();
+                    blackHoleParticlesArr.push(p);
+                }
+                for (let i = blackHoleParticlesArr.length - 1; i >= 0; i--) {
+                    blackHoleParticlesArr[i].update();
+                    blackHoleParticlesArr[i].show();
+                    if (blackHoleParticlesArr[i].finished()) {
+                        blackHoleParticlesArr.splice(i, 1);
+                    }
+                }
+
             }
-
-
-
-
 
         };
 
@@ -818,6 +839,13 @@
                 case "pavePics":
                     ImageFX.pavePics(args[0], args[1], args[2]);
                     break;
+                case "alternateText":
+                    Gen.alternateText(args[0], args[1], args[2], args[3]);
+                    break;
+                case "blackHoleParticles":
+                    Gen.blackHoleParticles();
+                    break;
+
             }
         }
 
@@ -829,6 +857,7 @@
 
         async function setup() {
             initMIDI();
+            initAudio();
             let cnv = createCanvas(windowWidth, windowHeight);
             cnv.style('z-index', '1');
             colorMode(HSB, 360, 100, 100, 100);
@@ -876,7 +905,7 @@
         function draw() {
             background(0);
             if (loading) return;
-
+            updateAudio();
             elapsedTime = millis() - startTime;
 
             if (elapsedTime >= totalTime) {
@@ -890,9 +919,12 @@
             for (let i = 0; i < timeline.length; i++) {
                 if (elapsedTime >= cursor && elapsedTime < cursor + timeline[i].time) {
                     if (currentStep !== i) {
-                        //pavepics reset
-
-                        slicerLastChange = 0;//reset for slicer
+                        //alterate image reset:
+                        altTextIndex = 0;
+                        altColorIndex = 0;
+                        altTextSwitch = 0;
+                        //reset for slicer
+                        slicerLastChange = 0;
                         slicerSliceWidth = 1;
                         currentStep = i;
                         altIndex = -1;  // reset for alternateImage, -1 otherwise skip the first image
@@ -902,6 +934,7 @@
                             timeline[i].action !== "pavePics") {
                             paveSquares = [];
                             pavePicsSquares = [];
+
                         }
 
                         if (timeline[i].action === "pave" || timeline[i].action === "dots") {
@@ -986,6 +1019,75 @@
             lastSwitch = 0;  // 👈 and this too
         }
 
+
+        // ─────────────────────────────────────────────────────────────────
+        // AUDIO
+        // ─────────────────────────────────────────────────────────────────
+
+        async function initAudio() {
+            // populate device list
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const inputs = devices.filter(d => d.kind === 'audioinput');
+            const select = document.getElementById('audioInput');
+
+            inputs.forEach(d => {
+                let opt = document.createElement('option');
+                opt.value = d.deviceId;
+                opt.text = d.label || 'Input ' + d.deviceId.slice(0, 6);
+                select.appendChild(opt);
+            });
+
+            // start button
+            document.getElementById('audioStart').addEventListener('click', async () => {
+                const deviceId = select.value;
+
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    audio: deviceId ? { deviceId: { ideal: deviceId } } : true
+                });
+
+                const ctx = new AudioContext();
+                const source = ctx.createMediaStreamSource(stream);
+                audAnalyser = ctx.createAnalyser();
+                audAnalyser.fftSize = 1024;
+                audData = new Uint8Array(audAnalyser.frequencyBinCount);
+                source.connect(audAnalyser);
+
+                // hide selector, show debug
+                document.getElementById('audioSelector').style.top = '18px';
+                document.getElementById('audioSelector').style.width = 'auto';
+                document.getElementById('audioStart').style.display = 'none';
+                document.getElementById('audioInput').style.display = 'none';
+                document.getElementById('audDebug').style.display = 'block';
+
+                console.log("AUDIO started:", deviceId);
+            });
+        }
+
+        function updateAudio() {
+            if (!audAnalyser || !audData) return;
+
+            audAnalyser.getByteFrequencyData(audData);
+
+            let binCount = audData.length;
+
+            let weightedSum = 0;  // sum of (frequency * amplitude)
+            let totalSum = 0;  // sum of amplitudes
+
+            for (let i = 0; i < binCount; i++) {
+                let v = audData[i] / 255.0;
+                weightedSum += i * v;  // frequency bin weighted by amplitude
+                totalSum += v;
+            }
+
+            // centroid — 0 = all bass, 1 = all highs
+            AUD_amplitude = totalSum / binCount;
+            AUD_centroid = totalSum > 0 ? (weightedSum / totalSum) / binCount : 0;
+
+            // update debug
+            document.getElementById('dbAmp').innerText = AUD_amplitude.toFixed(3);
+            document.getElementById('dbCentroid').innerText = AUD_centroid.toFixed(3);
+        }
+
     </script>
 
     <!--html-->
@@ -1029,6 +1131,54 @@
             </span>
         </div>
 
+    </div>
+
+
+    <!--     //----------------------
+    // AUDIO ANALIZER
+    //---------------------- -->
+
+    <div id="audioSelector" style="
+    position: fixed;
+    z-index: 1000;
+    top: 18px;
+    left: 18px;
+    background: rgba(0,0,0,0.8);
+    color: #fff;
+    font-family: monospace;
+    font-size: 11px;
+    padding: 10px;
+    border: 1px solid #333;
+">
+        <select id="audioInput" style="
+        background: #000;
+        color: #fff;
+        font-family: monospace;
+        font-size: 11px;
+        border: 1px solid #555;
+        margin-bottom: 6px;
+        width: 100%;
+    "></select>
+        <br>
+        <button id="audioStart" style="
+        background: #000;
+        color: #fff;
+        font-family: monospace;
+        font-size: 11px;
+        border: 1px solid #555;
+        cursor: pointer;
+        width: 100%;
+        margin-top: 4px;
+    ">START AUDIO</button>
+
+        <!-- debug meters -->
+        <div id="audDebug" style="margin-top:8px; display:none;">
+            <div>AMP <span id="dbAmp">0.00</span></div>
+            <div>CENTROID <span id="dbCentroid">0.00</span></div>
+            <!--           <div>BASS <span id="dbBass">0.00</span></div>
+            <div>MID <span id="dbMid">0.00</span></div>
+            <div>HIGH <span id="dbHigh">0.00</span></div> -->
+        </div>
     </div>
 
 

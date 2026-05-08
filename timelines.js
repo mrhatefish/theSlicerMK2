@@ -226,7 +226,22 @@ const TL_SLICER = [
 ]
 
 const TL_PAVEPICS = [
-    { time: 10000, action: "pavePics", args: [200, IMG_LOGHI, 0.5], mod: [null, 0], continuous: true },
+    { time: 10000, action: "pavePics", args: [200, IMG_LOGHI, 1], mod: [null, 0], continuous: true },
+]
+
+const TL_ALTTEXT = [
+    {
+        time: 10000, action: "alternateText", args: [
+            ["DISPOSABLE", "CONSUMER"],
+            CORP_COLORS,
+            0.15,
+            50
+        ], mod: [null, 0], continuous: true
+    }
+]
+
+const TL_BLACKHOLEPARTICLES = [
+    { time: 5000, action: "blackHoleParticles", continuous: true },
 ]
 
 const MIDI_MAP = {
@@ -238,6 +253,9 @@ const MIDI_MAP = {
     57: TL_PAVE,
     59: TL_TXT_REPLACEABLE,
     60: TL_SLICER,
-    62: TL_PAVEPICS
+    62: TL_PAVEPICS,
+    64: TL_ALTTEXT,
+    65: TL_BLACKHOLEPARTICLES
+
 
 }
