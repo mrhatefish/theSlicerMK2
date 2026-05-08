@@ -288,6 +288,9 @@
         let audBassMax = 0;
         let audMidMax = 0;
         let audHighMax = 0;
+        let AUD_centroid = 0
+        let audCentroidMax = 0.001;  // small value to avoid division by zero on startup
+        let AUD_centroid_norm = 0;  // global
 
         let rawImages = `
         1-nasci.jpg
@@ -1069,68 +1072,110 @@
 
             let binCount = audData.length;
 
-            // frequency band ranges — based on 44100hz sample rate, 1024 fftSize
-            let bassEnd = Math.floor(binCount * 0.08);   // 0–8%   = bass
-            let midEnd = Math.floor(binCount * 0.35);   // 8–35%  = mid
-            // high = 35–100%
-
-            let bassSum = 0, midSum = 0, highSum = 0, totalSum = 0;
+            let weightedSum = 0;  // sum of (frequency * amplitude)
+            let totalSum = 0;  // sum of amplitudes
 
             for (let i = 0; i < binCount; i++) {
-                let v = audData[i] / 255.0;  // normalize 0-1
+                let v = audData[i] / 255.0;
+                weightedSum += i * v;  // frequency bin weighted by amplitude
                 totalSum += v;
-                if (i < bassEnd) bassSum += v;
-                else if (i < midEnd) midSum += v;
-                else highSum += v;
             }
 
+            // centroid — 0 = all bass, 1 = all highs
             AUD_amplitude = totalSum / binCount;
-            AUD_bass = bassSum / bassEnd;
-            AUD_mid = midSum / (midEnd - bassEnd);
-            AUD_high = highSum / (binCount - midEnd);
+            AUD_centroid = totalSum > 0 ? (weightedSum / totalSum) / binCount : 0;
 
-            // update debug display
+            // self-calibrating centroid max
+            audCentroidMax = Math.max(audCentroidMax * 0.995, AUD_centroid);
+            let AUD_centroid_norm = AUD_centroid / audCentroidMax;  // always 0-1 relative to peak
+
+            // update debug
             document.getElementById('dbAmp').innerText = AUD_amplitude.toFixed(3);
-            document.getElementById('dbBass').innerText = AUD_bass.toFixed(3);
-            document.getElementById('dbMid').innerText = AUD_mid.toFixed(3);
-            document.getElementById('dbHigh').innerText = AUD_high.toFixed(3);
+            document.getElementById('dbCentroid').innerText = AUD_centroid_norm.toFixed(3);
         }
 
         // ─────────────────────────────────────────────────────────────────
         // Classes
         // ─────────────────────────────────────────────────────────────────
 
+        /*         class Particle {
+                    constructor() {
+                        let r = min(width, height) * 0.28 * randomGaussian(1, 0.0000);  // circle radius — same as glacial circle
+                        let angle = random(TWO_PI)             // random point on circle
+        
+                        this.x = (width / 2 + cos(angle) * r) * randomGaussian(1, 0.00);  // spawn on circle edge
+                        this.y = (height / 2 + sin(angle) * r) * randomGaussian(1, 0.00);
+        
+                        let speed = 1 + random(3, 5);
+                        this.vx = cos(angle) * speed * AUD_centroid * 10 * (randomGaussian(0, 2));  // propagate outward from center
+                        this.vy = sin(angle) * speed * 0.5 * (randomGaussian(0, 2));
+        
+                        this.alpha = 250;
+                        this.size = 1;
+                    }
+        
+        
+        
+                    finished() { return this.alpha < (150 * random(1, 0.1)) }
+        
+                    update() {
+                        this.x += this.vx;
+                        this.y += this.vy;
+                        this.alpha -= 4 * random(1, 0.1);
+                        this.size = 1;
+                    }
+        
+                    show() {
+                        noStroke();
+                        fill(255, this.alpha);
+                        ellipse(this.x, this.y, this.size);
+                    }
+                } */
+
         class Particle {
             constructor() {
-                let r = min(width, height) * 0.28 * randomGaussian(1, 0.0000);  // circle radius — same as glacial circle
-                let angle = random(TWO_PI)             // random point on circle
+                let r = min(width, height) * 0.28;
+                let angle = random(TWO_PI);
 
-                this.x = (width / 2 + cos(angle) * r) * randomGaussian(1, 0.00);  // spawn on circle edge
-                this.y = (height / 2 + sin(angle) * r) * randomGaussian(1, 0.00);
+                // high centroid = tight spawn, low centroid = fuzzy scatter
+                let fuzz = map(AUD_centroid_norm, 0, 1, 0.3, 0.01);
 
-                let speed = 1 + random(3, 5);
-                this.vx = cos(angle) * speed * 0.5 * (randomGaussian(0, 2));  // propagate outward from center
-                this.vy = sin(angle) * speed * 0.5 * (randomGaussian(0, 2));
+                this.x = width / 2 + cos(angle) * r * randomGaussian(1, AUD_centroid);
+                this.y = height / 2 + sin(angle) * r * randomGaussian(1, AUD_centroid);
 
-                this.alpha = 250;
-                this.size = 1;
+                // high centroid = fast and precise, low = slow and random
+                let speed = map(AUD_centroid_norm, 0, 1, 1, 6);
+                let drift = map(AUD_centroid_norm, 0, 1, 1.5, 0.05); // low centroid = more random drift
+
+                this.vx = cos(angle) * speed * randomGaussian(1, AUD_centroid);
+                this.vy = sin(angle) * speed * randomGaussian(1, AUD_centroid);
+
+
+                this.size = map(AUD_centroid_norm, 0, 1, 3, 1);
+
+                // high centroid = bright white, low = dimmer and larger
+                this.alpha = map(AUD_centroid, 0, 1, 120, 255);
+
+                // color temperature — high = cold white, low = warm dim
+                this.r = map(AUD_centroid, 0, 1, 180, 255);  // less red when bright
+                this.g = map(AUD_centroid, 0, 1, 140, 255);
+                this.b = map(AUD_centroid, 0, 1, 100, 255);  // more blue when bright = cold
             }
 
-
-
-            finished() { return this.alpha < (150 * random(1, 0.1)) }
+            finished() { return this.alpha < 100; }
 
             update() {
                 this.x += this.vx;
                 this.y += this.vy;
-                this.alpha -= 4 * random(1, 0.1);
-                this.size = 1;
+                this.alpha -= map(AUD_centroid, 0, 1, 1, 5);  // high centroid = faster fade
             }
 
             show() {
                 noStroke();
-                fill(255, this.alpha);
+                colorMode(RGB);
+                fill(255, 255, 255, this.alpha);
                 ellipse(this.x, this.y, this.size);
+                colorMode(HSB, 360, 100, 100, 100);
             }
         }
 
@@ -1220,11 +1265,12 @@
         <!-- debug meters -->
         <div id="audDebug" style="margin-top:8px; display:none;">
             <div>AMP <span id="dbAmp">0.00</span></div>
-            <div>BASS <span id="dbBass">0.00</span></div>
+            <div>Centroid <span id="dbCentroid">0.00</span></div>
+            <!--             <div>BASS <span id="dbBass">0.00</span></div>
             <div>MID <span id="dbMid">0.00</span></div>
             <div>HIGH <span id="dbHigh">0.00</span></div>
+        </div> -->
         </div>
-    </div>
 
 
 </body>
