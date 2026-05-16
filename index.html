@@ -291,6 +291,10 @@
         let AUD_centroid = 0
         let audCentroidMax = 0.001;  // small value to avoid division by zero on startup
         let AUD_centroid_norm = 0;  // global
+        let AUD_centroid_new = 0
+        let AUD_centroid_old = 0;
+        let AUD_centroid_fixed;
+        let AUD_centroid_fix_01 = 0.01;
 
         let rawImages = `
         1-nasci.jpg
@@ -356,6 +360,13 @@
         time2200.png
         time2300.png
         time2400.png
+        corporate_pexels-cottonbro-6814338.jpg
+        corporate_pexels-fauxels-3182748.jpg
+        corporate_pexels-rdne-6172545.jpg
+        corporate_pexels-thirdman-7653580.jpg
+        corporate_pexels-werner-pfennig-6950015.jpg
+        productive.jpg
+        productme.jpg
     `;
 
 
@@ -366,6 +377,9 @@
         let rawVideos = `
         detectPeopleAbove_002_fixed.mp4
         detectPeopleSub_002_fixed.mp4
+        pollution_11093332-hd_1920_1080_30fps.mp4
+        pollution_13386248_3840_2160_24fps.mp4
+        pollution_3174410-uhd_3840_2160_30fps.mp4
     `;
         let videosArr = rawVideos.split('\n').map(f => f.trim()).filter(f => f.length > 0);
 
@@ -494,7 +508,7 @@
 
             },
 
-            slicerImage(imgA, imgB, noise, lineweight, modalID, closeModals) {
+            slicerImageOLD(imgA, imgB, noise, lineweight, modalID, closeModals) {
                 colorMode(RGB);  // 👈
                 background(0);
                 var n = noise;
@@ -526,6 +540,48 @@
                 }
                 colorMode(HSB, 360, 100, 100, 100);  // 👈
             },
+
+            slicerImage(imgA, imgB, noise, lineweight, morphSpeed, sliceChangeRate, modalID, closeModals) {
+                // args: ["imgA.jpg", "imgB.jpg", noise, lineweight, morphSpeed, sliceChangeRate]
+                // noise:           glitch offset amount  e.g. 1 = subtle, 5 = heavy
+                // lineweight:      slice width in pixels e.g. 2 = thin, 10 = thick
+                // morphSpeed:      crossfade speed       e.g. 0.02 = slow, 0.1 = fast
+                // sliceChangeRate: frames between slice  e.g. 20 = slow, 4 = fast
+                // timeline example:
+                // { time: 10000, action: "slicerImage", args: ["BUY.jpg", "die.jpg", 1, 2, 0.02, 20], mod: [null, 0], continuous: true }
+                if (imgA && imgA.elt && imgA.elt.tagName === 'VIDEO' && imgA.elt.paused) imgA.play();
+
+                colorMode(RGB);
+                background(0);
+
+                modalManager(modalID, closeModals);
+
+                let morphAmount = map(sin(frameCount * morphSpeed), -1, 1, 0.05, 1);
+
+                push();
+                tint(255, 255 * (1 - morphAmount));
+                image(imgA, 0, 0, width, height);
+                tint(255, 255 * morphAmount);
+                image(imgB, 0, 0, width, height);
+                pop();
+
+                if (frameCount - slicerLastChange > sliceChangeRate + random(1, 3)) {
+                    slicerSliceWidth = lineweight;
+                    slicerLastChange = frameCount;
+                }
+
+                let numSlices = width / slicerSliceWidth;
+                for (let i = 0; i < numSlices; i++) {
+                    let x = i * slicerSliceWidth;
+                    if (i % 2 === 0) {
+                        image(imgB, x + noise * random(1, 2), 0, slicerSliceWidth, height,
+                            x * (imgB.width / width), 0,
+                            slicerSliceWidth * (imgB.width / width), imgB.height);
+                    }
+                }
+                colorMode(HSB, 360, 100, 100, 100);
+            },
+
             pavePics(N, images, cropAmount) {
                 // args: [N, ["img1.jpg","img2.jpg",...], cropAmount]
                 // N:          target number of cells e.g. 200
@@ -817,8 +873,16 @@
                 case "alternateImage":
                     ImageFX.alternateImage(args[0], args[1], mod[0] ?? null, mod[1] ?? 0);
                     break;
-                case "slicerImage":
+                case "slicerImageOLD":
                     ImageFX.slicerImage(getImage(args[0]), getImage(args[1]), args[2], args[3], mod[0] ?? null, mod[1] ?? 0);
+                    break;
+                case "slicerImage":
+                    ImageFX.slicerImage(
+                        getAsset(args[0]),   // imgA — video or image
+                        getImage(args[1]),   // imgB — image only
+                        args[2], args[3], args[4], args[5],
+                        mod[0] ?? null, mod[1] ?? 0
+                    );
                     break;
                 case "rect":
                     Gen.rect();
@@ -1086,12 +1150,20 @@
             AUD_centroid = totalSum > 0 ? (weightedSum / totalSum) / binCount : 0;
 
             // self-calibrating centroid max
-            audCentroidMax = Math.max(audCentroidMax * 0.995, AUD_centroid);
-            let AUD_centroid_norm = AUD_centroid / audCentroidMax;  // always 0-1 relative to peak
+            audCentroidMax = Math.max(audCentroidMax, AUD_centroid);
+            AUD_centroid_norm = AUD_centroid / audCentroidMax;  // always 0-1 relative to peak
 
             // update debug
             document.getElementById('dbAmp').innerText = AUD_amplitude.toFixed(3);
             document.getElementById('dbCentroid').innerText = AUD_centroid_norm.toFixed(3);
+        }
+
+        function getAsset(name) {
+            if (!name) return null;
+            if (name.endsWith('.mp4') || name.endsWith('.webm') || name.endsWith('.mov')) {
+                return getVideo(name);
+            }
+            return getImage(name);
         }
 
         // ─────────────────────────────────────────────────────────────────
@@ -1132,49 +1204,57 @@
                     }
                 } */
 
+
         class Particle {
             constructor() {
                 let r = min(width, height) * 0.28;
                 let angle = random(TWO_PI);
 
-                // high centroid = tight spawn, low centroid = fuzzy scatter
-                let fuzz = map(AUD_centroid_norm, 0, 1, 0.3, 0.01);
+                AUD_centroid_fix_01 = (AUD_centroid_fix_01 + AUD_centroid_norm) / 2
+                //let c = (pow(AUD_centroid_norm, 2) + 12 * pow(AUD_centroid_norm, 4)) * 0.25;
+                //AUD_centroid_fix_01 = 1 - (1 / pow(AUD_centroid_norm + 1, 8));
 
-                this.x = width / 2 + cos(angle) * r * randomGaussian(1, AUD_centroid);
-                this.y = height / 2 + sin(angle) * r * randomGaussian(1, AUD_centroid);
+                AUD_centroid_fix_01 = AUD_centroid_norm > 0
+                    ? (30 / (30 + pow(AUD_centroid_norm, -3.5)) + (1 - (1 / pow(AUD_centroid_norm + 1, 8))) * 0.5) * 0.681
+                    : 0;
+                if (AUD_centroid_fix_01 > 1) { AUD_centroid_fix_01 = 1 }
+                let fuzz = map(AUD_centroid_fix_01, 0, 1, 0.1, 0.00);
 
-                // high centroid = fast and precise, low = slow and random
-                let speed = map(AUD_centroid_norm, 0, 1, 1, 6);
-                let drift = map(AUD_centroid_norm, 0, 1, 1.5, 0.05); // low centroid = more random drift
+                this.x = width / 2 + cos(angle) * r * randomGaussian(1, fuzz);
+                this.y = height / 2 + sin(angle) * r * randomGaussian(1, fuzz);
 
-                this.vx = cos(angle) * speed * randomGaussian(1, AUD_centroid);
-                this.vy = sin(angle) * speed * randomGaussian(1, AUD_centroid);
+                // direction — fixed at birth
+                let drift = map(AUD_centroid_fix_01, 0, 1, 1.5, 0.0);
+                this.vx = cos(angle) * randomGaussian(1, drift);
+                this.vy = sin(angle) * randomGaussian(1, drift);
 
-
-                this.size = map(AUD_centroid_norm, 0, 1, 3, 1);
-
-                // high centroid = bright white, low = dimmer and larger
-                this.alpha = map(AUD_centroid, 0, 1, 120, 255);
-
-                // color temperature — high = cold white, low = warm dim
-                this.r = map(AUD_centroid, 0, 1, 180, 255);  // less red when bright
-                this.g = map(AUD_centroid, 0, 1, 140, 255);
-                this.b = map(AUD_centroid, 0, 1, 100, 255);  // more blue when bright = cold
+                this.alpha = 250;
+                this.life = 300;
             }
 
-            finished() { return this.alpha < 100; }
+            finished() { return this.life < 0; }
 
             update() {
-                this.x += this.vx;
-                this.y += this.vy;
-                this.alpha -= map(AUD_centroid, 0, 1, 1, 5);  // high centroid = faster fade
+                // all audio-reactive — recalculates every frame
+                let speed = map(AUD_centroid_fix_01, 0, 1, 6, 0);
+                let size = map(AUD_centroid_fix_01, 0, 1, 3, 1);
+                let fade = AUD_centroid_fix_01 * 1.07;
+
+                this.x += this.vx * speed;
+                this.y += this.vy * speed;
+                this.alpha -= fade;
+                this.life -= map(AUD_centroid_fix_01, 0, 1, 25, 100);
+
+                this.currentSize = 2;
+
+                console.log(AUD_centroid_norm)
             }
 
             show() {
                 noStroke();
                 colorMode(RGB);
                 fill(255, 255, 255, this.alpha);
-                ellipse(this.x, this.y, this.size);
+                ellipse(this.x, this.y, this.currentSize);
                 colorMode(HSB, 360, 100, 100, 100);
             }
         }

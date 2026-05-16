@@ -180,10 +180,42 @@ const TL_BLACLHOLE = [
 ];
 
 const TL_LOGHI = [
-    { time: 10000, action: "alternateImage", args: [IMG_LOGHI, 100], mod: [null, 1], continuous: true },
-    /*     { time: 10000, action: "alternateImage", args: [IMG_LOGHI, 300], mod: [null, 1], continuous: true },
-        { time: 10000, action: "alternateImage", args: [IMG_LOGHI, 600], mod: [null, 1], continuous: true },
-        { time: 10000, action: "alternateImage", args: [IMG_LOGHI, 1200], mod: [null, 1], continuous: true }, */
+    { time: 3000, action: "alternateImage", args: [IMG_LOGHI, 55], mod: [null, 1], continuous: true },
+    {
+        time: 3000, action: "alternateText", args: [
+            ["GIVE UP", "give up"],
+            CORP_COLORS,
+            0.15,
+            50
+        ], mod: [null, 0], continuous: true
+    },
+    { time: 3000, action: "alternateImage", args: [IMG_LOGHI, 100], mod: [null, 1], continuous: true },
+    {
+        time: 1000, action: "alternateText", args: [
+            ["your", "DREAMS"],
+            CORP_COLORS,
+            0.15,
+            50
+        ], mod: [null, 0], continuous: true
+    },
+    {
+        time: 1000, action: "alternateText", args: [
+            ["your", "DREAMS"],
+            CORP_COLORS,
+            0.20,
+            60
+        ], mod: [null, 0], continuous: true
+    },
+    {
+        time: 1500, action: "alternateText", args: [
+            ["your", "DREAMS"],
+            CORP_COLORS,
+            0.15,
+            80
+        ], mod: [null, 0], continuous: true
+    },
+
+
 ]
 
 const TL_TIME = [
@@ -244,6 +276,41 @@ const TL_BLACKHOLEPARTICLES = [
     { time: 5000, action: "blackHoleParticles", continuous: true },
 ]
 
+const TL_SLICERCORPORATE = [
+    { time: 10000, action: "slicerImage", args: ["BUY.jpg", "corporate_pexels-werner-pfennig-6950015.jpg", 0, 1, 0.06, 10], mod: [null, 0], continuous: true },
+    { time: 7000, action: "slicerImage", args: ["BUY.jpg", "corporate_pexels-werner-pfennig-6950015.jpg", 0.5, 1, 0.06, 10], mod: [null, 0], continuous: true },
+    { time: 11000, action: "slicerImage", args: ["BUY.jpg", "corporate_pexels-werner-pfennig-6950015.jpg", 1.2, 1, 0.06, 10], mod: [null, 0], continuous: true },
+    { time: 12000, action: "slicerImage", args: ["BUY.jpg", "corporate_pexels-werner-pfennig-6950015.jpg", 1.8, 1, 0.06, 10], mod: [null, 0], continuous: true },
+    { time: 14000, action: "slicerImage", args: ["BUY.jpg", "corporate_pexels-werner-pfennig-6950015.jpg", 2, 2, 0.06, 10], mod: [null, 0], continuous: true },
+
+]
+
+
+const TL_SLICER_VIDEO = [
+    {
+        time: 15000, action: "slicerImage", args: [
+            "pollution_11093332-hd_1920_1080_30fps.mp4",  // imgA — video, full canvas crossfaded
+            "productive.jpg",                           // imgB — image, sliced on top
+            0, 1, 0.01, 0.01                       // noise, lineweight, morphSpeed, sliceChangeRate
+        ], mod: [null, 0], continuous: true
+    },
+    {
+        time: 15000, action: "slicerImage", args: [
+            "pollution_11093332-hd_1920_1080_30fps.mp4",  // imgA — video, full canvas crossfaded
+            "productive.jpg",                           // imgB — image, sliced on top
+            1, 1, 0.01, 0.001                       // noise, lineweight, morphSpeed, sliceChangeRate
+        ], mod: [null, 0], continuous: true
+    },
+
+    {
+        time: 15000, action: "slicerImage", args: [
+            "pollution_11093332-hd_1920_1080_30fps.mp4",  // imgA — video, full canvas crossfaded
+            "productme.jpg",                           // imgB — image, sliced on top
+            0, 1, 0.01, 0.001                       // noise, lineweight, morphSpeed, sliceChangeRate
+        ], mod: [null, 0], continuous: true
+    },
+]
+
 const MIDI_MAP = {
     48: TL_DEFAULT,      // C3
     50: TL_DETECT,     // D3
@@ -255,7 +322,9 @@ const MIDI_MAP = {
     60: TL_SLICER,
     62: TL_PAVEPICS,
     64: TL_ALTTEXT,
-    65: TL_BLACKHOLEPARTICLES
+    65: TL_BLACKHOLEPARTICLES,
+    66: TL_SLICERCORPORATE,
+    67: TL_SLICER_VIDEO
 
 
 }
