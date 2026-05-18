@@ -296,6 +296,10 @@
         let AUD_centroid_fixed;
         let AUD_centroid_fix_01 = 0.01;
 
+        //----MORPH---
+        let morphNextIndex = 1;
+        let morphReady = false;
+
         let rawImages = `
         1-nasci.jpg
         2-cresci.jpg
@@ -367,6 +371,53 @@
         corporate_pexels-werner-pfennig-6950015.jpg
         productive.jpg
         productme.jpg
+        DEMOCRACY57.jpg	
+        DEMOCRACY61.jpg	
+        DEMOCRACY65.jpg	
+        DEMOCRACY69.jpg	
+        alphabet.jpg
+        DEMOCRACY58.jpg	
+        DEMOCRACY62.jpg	
+        DEMOCRACY66.jpg	
+        DEMOCRACY70.jpg	
+        linkedin.jpg
+        DEMOCRACY59.jpg	
+        DEMOCRACY63.jpg	
+        DEMOCRACY67.jpg	
+        DEMOCRACY71.jpg
+        DEMOCRACY60.jpg	
+        DEMOCRACY64.jpg	
+        DEMOCRACY68.jpg	
+        DEMOCRACY73.jpg
+        carrefour.jpg		
+        pfizer.jpg
+        BlackRock.jpg		
+        chevron.jpg		
+        philipmorris.jpg
+        Enel.jpg		
+        chiquita.jpg		
+        rhein.jpg
+        Eni.jpg			
+        corsight.jpg		
+        statestreet.jpg
+        Fidelity.jpg		
+        dupont.jpg		
+        teva.jpg
+        Fininvest.jpg		
+        jpmorgan.jpg		
+        totalenergies.jpg
+        Rockfeller.jpg		
+        leonardo.jpg		
+        unilever.jpg
+        Stellantis.jpg		
+        mondelez.jpg		
+        unitedHealthCare.jpg
+        adidas.jpg		
+        newmedenergy.jpg	
+        vanguard.jpg
+        blackstone.jpg		
+        nike.jpg		
+        walmart.jpg
     `;
 
 
@@ -556,7 +607,7 @@
 
                 modalManager(modalID, closeModals);
 
-                let morphAmount = map(sin(frameCount * morphSpeed), -1, 1, 0.05, 1);
+                let morphAmount = map(sin(frameCount * morphSpeed) * 2, -1, 1, 0, 1);
 
                 push();
                 tint(255, 255 * (1 - morphAmount));
@@ -644,8 +695,56 @@
 
                     image(img, dx, dy, dw, dh, sx, sy, sw, sh);
                 }
-            }
+            },
+            morphImage(imgsArr, speed, modalID, closeModals) {
+                if (!morphReady) {
+                    lastSwitch = millis();
+                    morphReady = true;
+                    return;  // skip this frame entirely
+                }
 
+                modalManager(modalID, closeModals);
+
+                let mode = imgsArr[0];
+                let images = imgsArr.slice(1);
+
+                let t = constrain((millis() - lastSwitch) / speed, 0, 1);
+                let raw = 1 / (1 + Math.exp(-12 * (t - 0.5)));
+                let rawMin = 1 / (1 + Math.exp(-12 * (0 - 0.5)));
+                let rawMax = 1 / (1 + Math.exp(-12 * (1 - 0.5)));
+                let morphAmount = map(raw, rawMin, rawMax, 0, 1);
+
+                if (t >= 1) {
+                    // current becomes next — continuity preserved
+                    altIndex = morphNextIndex;
+                    switch (mode) {
+                        case "RANDOM":
+                            morphNextIndex = floor(random(images.length));
+                            break;
+                        case "FORWARD":
+                        default:
+                            morphNextIndex = (altIndex + 1) % images.length;
+                            break;
+                    }
+                    lastSwitch = millis();
+                }
+
+                let imgA = getImage(images[max(0, altIndex)]);
+                let imgB = getImage(images[morphNextIndex]);
+
+                if (!imgA || !imgB) return;
+
+                push();
+                // imgA only starts fading when imgB is well underway
+                tint(255, t > 0.02 ? 255 * (1 - morphAmount) : 255);
+                image(imgA, 0, 0, width, height);
+
+                if (t > 0.02 && t < 0.99) {
+                    tint(255, 255 * morphAmount);
+                    image(imgB, 0, 0, width, height);
+                }
+                pop();
+            }
 
         };
 
@@ -911,6 +1010,9 @@
                 case "blackHoleParticles":
                     Gen.blackHoleParticles();
                     break;
+                case "morphImage":
+                    ImageFX.morphImage(args[0], args[1], mod[0] ?? null, mod[1] ?? 0);
+                    break;
 
             }
         }
@@ -985,6 +1087,12 @@
             for (let i = 0; i < timeline.length; i++) {
                 if (elapsedTime >= cursor && elapsedTime < cursor + timeline[i].time) {
                     if (currentStep !== i) {
+                        //morph reset
+                        altIndex = 0;
+                        morphNextIndex = 1;
+                        lastSwitch = 0;
+                        morphReady = false;
+
                         //alterate image reset:
                         altTextIndex = 0;
                         altColorIndex = 0;

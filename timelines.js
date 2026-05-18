@@ -150,8 +150,10 @@ C5  = 72
 const IMG_CIRCLE_B_W = ["RANDOM", "circleBlack.jpg", "circleWhite.jpg", "circleWhite.jpg", "circleWhite.jpg"]
 const IMG_LOGHI = ["RANDOM", "amazon.jpg", "caterpillar.jpg", "google.jpg", "microsoft.jpg", "openAI.jpg",
     "bo.jpg", "coke.jpg", "macdonalds.jpg", "nvidia.jpg", "palantir.jpg",
-    "apple.jpg", "bayer.jpg", "danone.jpg", "disney.jpg", "exxon.jpg", "gnamo.jpg", "meta.jpg", "monsanto.jpg", "nestle.jpg", "netflix.jpg", "shell.jpg", "spotify.jpg", "tesla.jpg", "tiktok.jpg", "x.jpg"
+    "apple.jpg", "bayer.jpg", "danone.jpg", "disney.jpg", "exxon.jpg", "gnamo.jpg", "meta.jpg", "monsanto.jpg", "nestle.jpg", "netflix.jpg", "shell.jpg", "spotify.jpg", "tesla.jpg", "tiktok.jpg", "x.jpg", "walmart.jpg", "vanguard.jpg", "unitedHealthCare.jpg", "unilever.jpg", "totalenergies.jpg", "teva.jpg", "statestreet.jpg", "rhein.jpg", "philipmorris.jpg", "pfizer.jpg", "nike.jpg", "newmedenergy.jpg", "mondelez.jpg", "leonardo.jpg", "jpmorgan.jpg", "dupont.jpg", "corsight.jpg", "chiquita.jpg", "chevron.jpg", "carrefour.jpg", "blackstone.jpg", "adidas.jpg", "Stellantis.jpg", "Rockfeller.jpg", "Fininvest.jpg", "Fidelity.jpg", "Eni.jpg", "Enel.jpg", "BlackRock.jpg", "linkedin.jpg", "alphabet.jpg",
 ]
+
+const IMG_DEMOCRACY = ["RANDOM", "DEMOCRACY73.jpg", "DEMOCRACY71.jpg", "DEMOCRACY70.jpg", "DEMOCRACY69.jpg", "DEMOCRACY68.jpg", "DEMOCRACY67.jpg", "DEMOCRACY66.jpg", "DEMOCRACY65.jpg", "DEMOCRACY64.jpg", "DEMOCRACY63.jpg", "DEMOCRACY62.jpg", "DEMOCRACY61.jpg", "DEMOCRACY60.jpg", "DEMOCRACY59.jpg", "DEMOCRACY58.jpg", "DEMOCRACY57.jpg"]
 
 
 
@@ -159,9 +161,15 @@ const IMG_TIMEFREE_1 = [
     "FORWARD", "time0100.png", "time0200.png", "time0300.png", "time0400.png", "time0500.png", "time0600.png", "time0700.png", "time0800.png"
 ];
 
-const IMG_TIMEJOB = [
-    "FORWARD", "time0900.png", "time1000.png", "time1100.png", "time1200.png", "time1300.png", "time1400.png", "time1500.png", "time1600.png", "time1700.png", "time1800.png"
+const IMG_TIMEJOB_1 = [
+    "FORWARD", "time0900.png", "time1000.png", "time1100.png", "time1200.png", "time1300.png"
 ];
+
+const IMG_TIMEJOB_2 = [
+    "FORWARD", "time1400.png", "time1500.png", "time1600.png", "time1700.png", "time1800.png"
+];
+
+
 
 const IMG_TIMEFREE_2 = [
     "FORWARD", "time1900.png", "time2000.png", "time2100.png", "time2200.png", "time2300.png", "time2400.png"
@@ -221,8 +229,17 @@ const TL_LOGHI = [
 const TL_TIME = [
     { time: (IMG_TIMEFREE_1.length - 1) * 150, action: "alternateImage", args: [IMG_TIMEFREE_1, 150], mod: [null, 1], continuous: true },
     { time: 3000, action: "showText", args: ["#FFFFFF", "#000000", 0.25, "EIGHT\nHOURS"], mod: [null, 0], continuous: true },
-    { time: (IMG_TIMEJOB.length - 1) * 1210, action: "alternateImage", args: [IMG_TIMEJOB, 1210], mod: [null, 0], continuous: true },
-    { time: 3400, action: "showText", args: ["#FFFFFF", "#000000", 0.25, "ARE\nOURS"], mod: [null, 0], continuous: true },
+    { time: (IMG_TIMEJOB_1.length - 1) * 1210, action: "alternateImage", args: [IMG_TIMEJOB_1, 1210], mod: [null, 0], continuous: true },
+    { time: 3000, action: "showText", args: ["#000000", "#FFFFFF", 0.25, "EIGHT\nHOURS"], mod: [null, 0], continuous: true },
+    { time: (IMG_TIMEJOB_2.length - 1) * 1210, action: "alternateImage", args: [IMG_TIMEJOB_2, 1210], mod: [null, 0], continuous: true },
+    { time: 425, action: "showText", args: ["#FFFFFF", "#000000", 0.25, "ARE\nOURS"], mod: [null, 0], continuous: true },
+    { time: 425, action: "showText", args: ["#000000", "#FFFFFF", 0.25, "ARE\nOURS"], mod: [null, 0], continuous: true },
+    { time: 425, action: "showText", args: ["#FFFFFF", "#000000", 0.25, "ARE\nOURS"], mod: [null, 0], continuous: true },
+    { time: 425, action: "showText", args: ["#000000", "#FFFFFF", 0.25, "ARE\nOURS"], mod: [null, 0], continuous: true },
+    { time: 425, action: "showText", args: ["#FFFFFF", "#000000", 0.25, "ARE\nOURS"], mod: [null, 0], continuous: true },
+    { time: 425, action: "showText", args: ["#000000", "#FFFFFF", 0.25, "ARE\nOURS"], mod: [null, 0], continuous: true },
+    { time: 425, action: "showText", args: ["#FFFFFF", "#000000", 0.25, "ARE\nOURS"], mod: [null, 0], continuous: true },
+    { time: 425, action: "showText", args: ["#000000", "#FFFFFF", 0.25, "ARE\nOURS"], mod: [null, 0], continuous: true },
     { time: (IMG_TIMEFREE_2.length - 1) * 150, action: "alternateImage", args: [IMG_TIMEFREE_2, 150], mod: [null, 0], continuous: true },
 
 
@@ -311,11 +328,47 @@ const TL_SLICER_VIDEO = [
     },
 ]
 
+const TL_DEMOCRACY_01 = [
+    { time: (IMG_DEMOCRACY.length - 1) * 150, action: "alternateImage", args: [IMG_DEMOCRACY, 150], mod: [null, 1], continuous: true },
+    { time: 4000, action: "alternateText", args: [["WE ARE ONE", "WE ARE ONE"], ["#FFFFFF", "#000000"], 0.15, 50], mod: [null, 0], continuous: true },
+    { time: (IMG_DEMOCRACY.length - 1) * 200, action: "alternateImage", args: [IMG_DEMOCRACY, 150], mod: [null, 1], continuous: true },
+    { time: 2000, action: "alternateText", args: [["ONE DEMOCRACY", "ONE DEMOCRACY"], ["#FFFFFF", "#000000"], 0.15, 50], mod: [null, 0], continuous: true },
+    { time: 2000, action: "alternateText", args: [["ONE DEMOCRACY", "ONE DEMOCRACY"], ["#FFFFFF", "#000000"], 0.20, 60], mod: [null, 0], continuous: true },
+    { time: 6000, action: "alternateText", args: [["ONE DEMOCRAZY", "ONE DEMOCRAZY"], ["#FFFFFF", "#000000", "#F25022", "#DA291C"], 0.21, 85], mod: [null, 0], continuous: true },
+    { time: (IMG_DEMOCRACY.length - 1) * 200, action: "alternateImage", args: [IMG_DEMOCRACY, 120], mod: [null, 1], continuous: true },
+
+
+]
+
+const TL_DEMOCRACY_SLICER_01 = [
+    {
+        time: 15000, action: "slicerImage", args: [
+            "DEMOCRACY57.jpg",  // imgA — video, full canvas crossfaded
+            "DEMOCRACY58.jpg",                           // imgB — image, sliced on top
+            0, 3, 0.01, 0.001                       // noise, lineweight, morphSpeed, sliceChangeRate
+        ], mod: [null, 0], continuous: true
+    },
+    {
+        time: 15000, action: "slicerImage", args: [
+            "DEMOCRACY59.jpg",  // imgA — video, full canvas crossfaded
+            "DEMOCRACY58.jpg",                           // imgB — image, sliced on top
+            0, 3, 0.01, 0.001                       // noise, lineweight, morphSpeed, sliceChangeRate
+        ], mod: [null, 0], continuous: true
+    }
+
+]
+
+const TL_MORPH_DEMOCRACY = [
+    { time: 30000, action: "morphImage", args: [IMG_DEMOCRACY, 100], mod: [null, 0], continuous: true },
+]
+
+
 const MIDI_MAP = {
     48: TL_DEFAULT,      // C3
     50: TL_DETECT,     // D3
     52: TL_LOGHI,
-    53: TL_BLACLHOLE,
+    53: TL_DEMOCRACY_01,
+    54: TL_MORPH_DEMOCRACY,
     55: TL_TIME,
     57: TL_PAVE,
     59: TL_TXT_REPLACEABLE,
